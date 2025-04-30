@@ -146,59 +146,124 @@ class NekoInterpreter {
     
     // Check if the module exists
     if (!this.modules.has(moduleName)) {
-      // If the module doesn't exist, try to load a standard library module
-      if (moduleName === 'Base') {
-        // Base module is already loaded in the constructor
-      } else if (moduleName === 'Math') {
-        // Math module
-        const mathModule = new Map();
-        mathModule.set('PI', Math.PI);
-        mathModule.set('cos', Math.cos);
-        mathModule.set('sin', Math.sin);
-        mathModule.set('tan', Math.tan);
-        mathModule.set('sqrt', Math.sqrt);
-        mathModule.set('pow', Math.pow);
-        mathModule.set('random', Math.random);
-        
-        this.modules.set('Math', mathModule);
-      } else if (moduleName === 'Web') {
-        // Simulate web module
-        const webModule = new Map();
-        webModule.set('fetcher', async (url) => {
+      try {
+        // Try to load module from our modules directory
+        if (moduleName === 'Base') {
+          // Base module is loaded separately in the constructor
+          const { createBaseModule } = require('./modules/Base');
+          this.modules.set('Base', createBaseModule());
+        } 
+        else if (moduleName === 'Math') {
+          const { createMathModule } = require('./modules/Math');
+          this.modules.set('Math', createMathModule());
+        } 
+        else if (moduleName === 'Web') {
+          const { createWebModule } = require('./modules/Web');
+          this.modules.set('Web', createWebModule());
+        } 
+        else if (moduleName === 'Discord') {
+          const { createDiscordModule } = require('./modules/Discord');
+          this.modules.set('Discord', createDiscordModule());
+        } 
+        else if (moduleName === 'Game') {
+          const { createGameModule } = require('./modules/Game');
+          this.modules.set('Game', createGameModule());
+        } 
+        else {
+          // Try to load custom user modules
           try {
-            return `Données récupérées de ${url}`;
-          } catch (error) {
-            return `Erreur: ${error.message}`;
+            // Check in local node_modules first
+            const customModule = require(`nekoscript-${moduleName.toLowerCase()}`);
+            if (customModule && typeof customModule.createModule === 'function') {
+              this.modules.set(moduleName, customModule.createModule());
+            } else {
+              throw new Error(`Le module ${moduleName} ne contient pas de méthode createModule()`);
+            }
+          } catch (moduleError) {
+            // Try in user's local directory
+            try {
+              const path = require('path');
+              const customModulePath = path.resolve(process.cwd(), `${moduleName}.neko`);
+              const fs = require('fs');
+              
+              if (fs.existsSync(customModulePath)) {
+                console.log(`Chargement du module local ${moduleName} depuis ${customModulePath}`);
+                const moduleCode = fs.readFileSync(customModulePath, 'utf-8');
+                // Parse and evaluate the module code
+                const moduleAST = this.parser.parse(moduleCode);
+                this.evaluate(moduleAST);
+              } else {
+                throw new Error(`Module ${moduleName} introuvable`);
+              }
+            } catch (localError) {
+              console.error(`Erreur lors du chargement du module ${moduleName}: ${localError.message}`);
+              throw new Error(`Module ${moduleName} introuvable. Assurez-vous de l'installer avec 'neko-script librairie ${moduleName}'`);
+            }
           }
-        });
+        }
+      } catch (error) {
+        console.error(`Erreur lors du chargement du module ${moduleName}: ${error.message}`);
         
-        webModule.set('créerPage', (titre, contenu) => {
-          return `Page créée: ${titre}\\n${contenu}`;
-        });
-        
-        this.modules.set('Web', webModule);
-      } else if (moduleName === 'Discord') {
-        // Simulate Discord module
-        const discordModule = new Map();
-        discordModule.set('créerBot', (token) => {
-          return `Bot Discord créé avec le token ${token}`;
-        });
-        
-        discordModule.set('surMessage', (fn) => {
-          console.log("Événement de message configuré");
-          // Simulate a message event
-          setTimeout(() => {
-            fn({ contenu: "Bonjour, je suis un message !", auteur: "Utilisateur" });
-          }, 100);
-        });
-        
-        discordModule.set('surTouche', (key, fn) => {
-          console.log(`Événement de touche configuré pour ${key}`);
-        });
-        
-        this.modules.set('Discord', discordModule);
-      } else {
-        throw new Error(`Module ${moduleName} introuvable`);
+        // Fallback to basic modules if loading fails
+        if (moduleName === 'Base') {
+          // Create a basic Base module
+          const baseModule = new Map();
+          baseModule.set('nekAfficher', (message) => {
+            console.log(message);
+            return message;
+          });
+          this.modules.set('Base', baseModule);
+        } 
+        else if (moduleName === 'Math') {
+          // Create a basic Math module
+          const mathModule = new Map();
+          mathModule.set('PI', Math.PI);
+          mathModule.set('cos', Math.cos);
+          mathModule.set('sin', Math.sin);
+          mathModule.set('tan', Math.tan);
+          mathModule.set('sqrt', Math.sqrt);
+          mathModule.set('pow', Math.pow);
+          mathModule.set('random', Math.random);
+          this.modules.set('Math', mathModule);
+        } 
+        else if (moduleName === 'Web') {
+          // Create a basic Web module
+          const webModule = new Map();
+          webModule.set('fetcher', async (url) => {
+            return `Données récupérées de ${url} (simulation)`;
+          });
+          webModule.set('créerPage', (titre, contenu) => {
+            return `Page créée: ${titre}\\n${contenu}`;
+          });
+          this.modules.set('Web', webModule);
+        } 
+        else if (moduleName === 'Discord') {
+          // Create a basic Discord module
+          const discordModule = new Map();
+          discordModule.set('créerBot', (token) => {
+            return `Bot Discord simulé créé avec le token ${token}`;
+          });
+          discordModule.set('surMessage', (fn) => {
+            console.log("Événement de message configuré (simulation)");
+            setTimeout(() => {
+              fn({ contenu: "Bonjour, je suis un message simulé !", auteur: "Utilisateur" });
+            }, 100);
+          });
+          this.modules.set('Discord', discordModule);
+        } 
+        else if (moduleName === 'Game') {
+          // Create a basic Game module
+          const gameModule = new Map();
+          gameModule.set('créerJeu', (largeur, hauteur) => {
+            return {
+              démarrer: () => console.log(`Jeu simulé démarré (${largeur}x${hauteur})`)
+            };
+          });
+          this.modules.set('Game', gameModule);
+        } 
+        else {
+          throw new Error(`Module ${moduleName} introuvable et impossible à simuler`);
+        }
       }
     }
     
