@@ -1,0 +1,194 @@
+// Exemple de bot de modération Discord en nekoScript
+// Ce bot permet de modérer un serveur Discord avec des commandes de gestion
+
+// Importer le module Discord
+importer Discord;
+
+// Configuration du bot
+nekVariable TOKEN = "VOTRE_TOKEN_DISCORD_ICI";
+nekVariable PREFIX = "!mod";  // Préfixe pour les commandes
+nekVariable MOD_ROLE_ID = "ID_DU_ROLE_MODERATEUR"; // Remplacer par l'ID de votre rôle modérateur
+
+// Créer et configurer le bot
+nekVariable bot = nekCréerBot(TOKEN)
+  .définirPréfixe(PREFIX)
+  .changerStatut("Modération | !mod aide", "REGARDE");
+
+// Quand le bot est prêt
+bot.surConnexion(function(info) {
+  nekAfficher("Bot de modération connecté comme: " + info.tag);
+  nekAfficher("Présent sur " + info.serveurs + " serveurs");
+});
+
+// Fonction pour vérifier si l'utilisateur est modérateur
+nekFonction estModerateur(message) {
+  // Vérifier si le message provient d'un serveur
+  si (message.serveurId === null) {
+    retourner false;
+  }
+  
+  // Récupérer le membre via l'API Discord.js
+  nekVariable membre = bot.client.guilds.cache.get(message.serveurId).members.cache.get(message.auteurId);
+  
+  // Vérifier si le membre a le rôle modérateur
+  si (membre === undefined) {
+    retourner false;
+  }
+  
+  retourner membre.roles.cache.has(MOD_ROLE_ID);
+}
+
+// Gérer les messages reçus
+bot.surMessage(function(message) {
+  // Ignorer si le message ne commence pas par le préfixe
+  si (message.contenu.startsWith(PREFIX) === false) {
+    retourner;
+  }
+
+  // Parser la commande
+  nekVariable commande = parseCommandes(PREFIX, message.contenu);
+  
+  // Si la commande est nulle, ignorer
+  si (commande === null) {
+    retourner;
+  }
+  
+  // Vérifier si l'utilisateur est modérateur pour les commandes de modération
+  si (commande.commandName !== "aide" && commande.commandName !== "info") {
+    si (estModerateur(message) === false) {
+      message.répondre("❌ Vous n'avez pas les permissions nécessaires pour utiliser cette commande.");
+      retourner;
+    }
+  }
+
+  // Traiter les différentes commandes
+  si (commande.commandName === "aide" || commande.commandName === "help") {
+    // Commande d'aide
+    nekVariable embed = bot.créerEmbed(
+      "Bot de Modération - Aide",
+      "Préfixe: `" + PREFIX + "`\nCommandes disponibles:",
+      "#ff3366"
+    )
+    .ajouterChamp(PREFIX + " aide", "Affiche cette aide", false)
+    .ajouterChamp(PREFIX + " info", "Informations sur le bot", false)
+    .ajouterChamp(PREFIX + " clear [nombre]", "Supprime un nombre de messages (max 100)", false)
+    .ajouterChamp(PREFIX + " kick @utilisateur [raison]", "Expulse un utilisateur", false)
+    .ajouterChamp(PREFIX + " ban @utilisateur [raison]", "Bannit un utilisateur", false)
+    .ajouterChamp(PREFIX + " mute @utilisateur [durée]", "Met en sourdine un utilisateur", false)
+    .ajouterChamp(PREFIX + " unmute @utilisateur", "Retire la sourdine d'un utilisateur", false)
+    .définirFooter("Bot de Modération nekoScript v1.0");
+    
+    message.répondre({ embeds: [embed.embed] });
+  }
+  sinon si (commande.commandName === "info") {
+    // Informations sur le bot
+    nekVariable embed = bot.créerEmbed(
+      "Bot de Modération nekoScript",
+      "Ce bot est conçu pour aider à la modération de votre serveur Discord.",
+      "#ff3366"
+    )
+    .ajouterChamp("Fonctionnalités", "✓ Gestion des messages\n✓ Gestion des utilisateurs\n✓ Logs d'actions", false)
+    .ajouterChamp("Version", "1.0.0", true)
+    .ajouterChamp("Préfixe", PREFIX, true)
+    .définirFooter("Créé avec nekoScript 🐱");
+    
+    message.répondre({ embeds: [embed.embed] });
+  }
+  sinon si (commande.commandName === "clear") {
+    // Suppression de messages
+    nekVariable nombre = 10; // Valeur par défaut
+    
+    // Vérifier si un nombre est fourni
+    si (commande.args.length > 0) {
+      nombre = Number(commande.args[0]);
+      si (isNaN(nombre)) {
+        message.répondre("❌ Veuillez fournir un nombre valide.");
+        retourner;
+      }
+      si (nombre < 1 || nombre > 100) {
+        message.répondre("❌ Le nombre doit être entre 1 et 100.");
+        retourner;
+      }
+    }
+    
+    // Utiliser l'API Discord.js pour supprimer les messages
+    message.channel.bulkDelete(nombre)
+      .then((messages) => {
+        message.répondre("✅ " + messages.size + " messages supprimés.").then((msg) => {
+          // Supprimer le message de confirmation après 3 secondes
+          setTimeout(() => msg.delete(), 3000);
+        });
+      })
+      .catch((error) => {
+        message.répondre("❌ Erreur: " + error.message);
+      });
+  }
+  sinon si (commande.commandName === "kick") {
+    // Expulsion d'un utilisateur
+    // Vérifier si un utilisateur est mentionné
+    si (commande.args.length < 1) {
+      message.répondre("❌ Veuillez mentionner un utilisateur à expulser.");
+      retourner;
+    }
+    
+    // Récupérer l'utilisateur mentionné
+    nekVariable mention = message.contenu.mentions.users.first();
+    si (mention === undefined) {
+      message.répondre("❌ Utilisateur non trouvé.");
+      retourner;
+    }
+    
+    // Récupérer la raison
+    nekVariable raison = "Aucune raison fournie";
+    si (commande.args.length > 1) {
+      raison = commande.args.slice(1).join(" ");
+    }
+    
+    // Expulser l'utilisateur
+    message.guild.members.kick(mention, raison)
+      .then(() => {
+        message.répondre("✅ " + mention.tag + " a été expulsé. Raison: " + raison);
+      })
+      .catch((error) => {
+        message.répondre("❌ Erreur: " + error.message);
+      });
+  }
+  sinon si (commande.commandName === "ban") {
+    // Bannissement d'un utilisateur
+    // Vérifier si un utilisateur est mentionné
+    si (commande.args.length < 1) {
+      message.répondre("❌ Veuillez mentionner un utilisateur à bannir.");
+      retourner;
+    }
+    
+    // Récupérer l'utilisateur mentionné
+    nekVariable mention = message.contenu.mentions.users.first();
+    si (mention === undefined) {
+      message.répondre("❌ Utilisateur non trouvé.");
+      retourner;
+    }
+    
+    // Récupérer la raison
+    nekVariable raison = "Aucune raison fournie";
+    si (commande.args.length > 1) {
+      raison = commande.args.slice(1).join(" ");
+    }
+    
+    // Bannir l'utilisateur
+    message.guild.members.ban(mention, { reason: raison })
+      .then(() => {
+        message.répondre("✅ " + mention.tag + " a été banni. Raison: " + raison);
+      })
+      .catch((error) => {
+        message.répondre("❌ Erreur: " + error.message);
+      });
+  }
+  sinon si (commande.commandName === "mute" || commande.commandName === "unmute") {
+    // Gestion de la sourdine (mute/unmute)
+    message.répondre("Cette fonctionnalité nécessite une configuration spécifique au serveur.");
+  }
+  sinon {
+    // Commande inconnue
+    message.répondre("❓ Commande inconnue. Utilisez `" + PREFIX + " aide` pour voir les commandes disponibles.");
+  }
+});

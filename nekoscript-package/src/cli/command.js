@@ -571,17 +571,28 @@ Note: Le fichier n'a pas pu être écrit sur disque.`);
             // Créer une instance de l'interpréteur nekoScript
             const interpreter = new NekoInterpreter();
             
-            // Ajouter le client Discord à l'environnement d'exécution
+            // Ajouter le client Discord à l'environnement d'exécution pour qu'il soit accessible au script
             interpreter.environment.set('_discordClient', client);
             
-            // Ajouter des fonctions utilitaires pour le traitement des commandes Discord
-            interpreter.environment.set('parseCommandes', (commandPrefix, messageContent) => {
-              if (!messageContent.startsWith(commandPrefix)) return null;
-              
-              const args = messageContent.slice(commandPrefix.length).trim().split(/ +/);
-              const commandName = args.shift().toLowerCase();
-              
-              return { commandName, args };
+            // Ajouter le parser de commandes pour faciliter le traitement des commandes
+            const { parseCommand } = require('../../expression-evaluator');
+            interpreter.environment.set('parseCommandes', parseCommand);
+            
+            // Ajouter des variables et fonctions utiles pour le développeur nekoScript
+            interpreter.environment.set('PREFIX', '!'); // Préfixe par défaut, peut être remplacé dans le code nekoScript
+            interpreter.environment.set('BOT_NAME', client.user ? client.user.username : 'NekoBot');
+            
+            // Fonction pour faciliter la récupération du token dans le code
+            interpreter.environment.set('extractToken', (content) => {
+              const tokenMatch = content.match(/TOKEN\s*=\s*["'](.+?)["']/);
+              return tokenMatch ? tokenMatch[1] : null;
+            });
+            
+            // Fonction pour identifier les commandes depuis le texte du message
+            interpreter.environment.set('estCommande', (prefix, messageContent, commande) => {
+              if (!messageContent || !messageContent.startsWith(prefix)) return false;
+              const parsed = parseCommand(prefix, messageContent);
+              return parsed && parsed.commandName === commande;
             });
             
             // Exécuter le code nekoScript

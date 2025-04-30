@@ -376,44 +376,72 @@ class NekoInterpreter {
   }
 
   evaluateSimpleExpression(expression) {
-    // This is a very simplified expression evaluator
-    // In a real interpreter, this would be much more complex
+    // Expression évaluateur amélioré pour nekoScript
+    console.log(`[NekoScript] Évaluation de l'expression: ${expression}`);
     
-    if (expression.startsWith('"') && expression.endsWith('"')) {
+    // Utiliser l'évaluateur d'expressions avancé si disponible
+    try {
+      // Vérifier si nous avons une expression de comparaison
+      if (typeof expression === 'string' && (
+          expression.includes('===') || expression.includes('==') || 
+          expression.includes('!==') || expression.includes('!=') ||
+          expression.includes('>=') || expression.includes('<=') ||
+          expression.includes('>') || expression.includes('<') ||
+          expression.includes('est égal à') || expression.includes('égal à') ||
+          expression.includes('est différent de') || expression.includes('différent de') ||
+          expression.includes('contient') || expression.includes('commence par') ||
+          expression.includes('.startsWith(') || expression.includes('.includes(')
+      )) {
+        // Charger l'évaluateur d'expressions
+        const expressionEvaluator = require('./expression-evaluator');
+        console.log(`[NekoScript] Utilisation de l'évaluateur avancé pour: ${expression}`);
+        return expressionEvaluator.evaluateComparisonExpression(expression, this.environment);
+      }
+    } catch (error) {
+      console.error(`[NekoScript] Erreur avec l'évaluateur avancé: ${error.message}`);
+      // Continuer avec l'évaluateur simple
+    }
+    
+    // Cas de base : chaîne de caractères
+    if (typeof expression === 'string' && expression.startsWith('"') && expression.endsWith('"')) {
       return expression.slice(1, -1);
     }
     
-    if (expression === 'true') return true;
-    if (expression === 'false') return false;
+    // Valeurs booléennes en français et en anglais
+    if (expression === 'true' || expression === 'vrai') return true;
+    if (expression === 'false' || expression === 'faux') return false;
     
+    // Nombres
     if (!isNaN(Number(expression))) {
       return Number(expression);
     }
     
-    // Check if it's a variable
+    // Variables
     if (this.environment.has(expression)) {
       return this.environment.get(expression);
     }
     
-    // Check for string concatenation
-    if (expression.includes('+')) {
+    // Concaténation de chaînes
+    if (typeof expression === 'string' && expression.includes('+')) {
       const parts = expression.split('+').map(part => part.trim());
       return parts.map(part => this.evaluateSimpleExpression(part)).join('');
     }
     
-    // Check for function calls
-    const functionCallMatch = expression.match(/(\w+)\((.*)\)/);
+    // Appels de fonction
+    const functionCallMatch = typeof expression === 'string' ? 
+      expression.match(/(\w+)\((.*)\)/) : null;
+      
     if (functionCallMatch) {
       const functionName = functionCallMatch[1];
       const argsStr = functionCallMatch[2];
       
-      // Extract the arguments
+      // Extraire les arguments
       const args = argsStr ? argsStr.split(',').map(arg => {
         const trimmed = arg.trim();
         return this.evaluateSimpleExpression(trimmed);
       }) : [];
       
-      // Call the function
+      // Appeler la fonction
       const fn = this.environment.get(functionName);
       if (!fn) {
         throw new Error(`Fonction ${functionName} non définie`);
@@ -422,7 +450,27 @@ class NekoInterpreter {
       return fn(...args);
     }
     
-    // Default: return the expression itself
+    // Accès aux propriétés (message.contenu)
+    if (typeof expression === 'string' && expression.includes('.') && !expression.includes('(')) {
+      const parts = expression.split('.');
+      let value = this.environment.get(parts[0]);
+      
+      if (value !== undefined) {
+        // Naviguer dans l'objet
+        for (let i = 1; i < parts.length; i++) {
+          if (value === undefined || value === null) {
+            console.log(`[NekoScript] Propriété ${parts.slice(0, i).join('.')} est undefined ou null`);
+            return undefined;
+          }
+          
+          value = value[parts[i]];
+        }
+        
+        return value;
+      }
+    }
+    
+    // Par défaut, retourner l'expression telle quelle
     return expression;
   }
 

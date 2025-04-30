@@ -1,0 +1,96 @@
+// Exemple de bot Discord complet en nekoScript
+// Ce bot peut répondre à plusieurs commandes et utilise les embeds
+// Il a aussi un statut personnalisé
+
+// Importer le module Discord
+importer Discord;
+
+// Configuration du bot
+nekVariable TOKEN = "VOTRE_TOKEN_DISCORD_ICI";
+nekVariable PREFIX = "!";  // Préfixe pour les commandes
+
+// Créer et configurer le bot
+nekVariable bot = nekCréerBot(TOKEN)
+  .définirPréfixe(PREFIX)
+  .changerStatut("nekoScript | !aide", "JOUE");
+
+// Quand le bot est prêt
+bot.surConnexion(function(info) {
+  nekAfficher("Bot connecté comme: " + info.tag);
+  nekAfficher("Présent sur " + info.serveurs + " serveurs");
+});
+
+// Gérer les messages reçus
+bot.surMessage(function(message) {
+  // Ignorer si le message ne commence pas par le préfixe
+  si (message.contenu.startsWith(PREFIX) === false) {
+    retourner;
+  }
+
+  // Parser la commande
+  nekVariable commande = parseCommandes(PREFIX, message.contenu);
+  
+  // Si la commande est nulle, ignorer
+  si (commande === null) {
+    retourner;
+  }
+
+  // Traiter les différentes commandes
+  si (commande.commandName === "ping") {
+    // Commande simple: ping/pong
+    message.répondre("🏓 Pong!");
+  } 
+  sinon si (commande.commandName === "aide" || commande.commandName === "help") {
+    // Commande d'aide avec embed
+    nekVariable embed = bot.créerEmbed(
+      "Aide du Bot nekoScript",
+      "Voici les commandes disponibles:",
+      "#8c52ff"
+    )
+    .ajouterChamp(PREFIX + "ping", "Vérifie si le bot répond", true)
+    .ajouterChamp(PREFIX + "aide", "Affiche cette aide", true)
+    .ajouterChamp(PREFIX + "info", "Informations sur nekoScript", true)
+    .ajouterChamp(PREFIX + "avatar", "Affiche votre avatar", true)
+    .ajouterChamp(PREFIX + "salut", "Le bot vous dit bonjour", true)
+    .définirFooter("Bot créé avec nekoScript 🐱");
+    
+    // Envoyer dans le canal actuel
+    message.répondre({ embeds: [embed.embed] });
+  }
+  sinon si (commande.commandName === "info") {
+    // Informations sur nekoScript
+    nekVariable embed = bot.créerEmbed(
+      "nekoScript",
+      "nekoScript est un langage de programmation en français conçu pour être simple et accessible.",
+      "#ff9966"
+    )
+    .ajouterChamp("Caractéristiques", "✓ Syntaxe en français\n✓ Fonctions simples\n✓ Support Discord", false)
+    .ajouterChamp("Liens", "[Site Web](https://nekoscript.example) | [GitHub](https://github.com/exemple/nekoScript)", false)
+    .définirImage("https://i.imgur.com/pIZQxGw.png") // Logo nekoScript
+    .définirFooter("nekoScript v1.2.0");
+    
+    message.répondre({ embeds: [embed.embed] });
+  }
+  sinon si (commande.commandName === "avatar") {
+    // Afficher l'avatar de l'utilisateur
+    nekVariable avatarURL = "https://cdn.discordapp.com/avatars/" + message.auteurId + "/" + "avatar.png";
+    
+    nekVariable embed = bot.créerEmbed(
+      "Avatar de " + message.auteur,
+      "Voici votre avatar:",
+      "#33cc99"
+    )
+    .définirImage(avatarURL);
+    
+    message.répondre({ embeds: [embed.embed] });
+  }
+  sinon si (commande.commandName === "salut") {
+    // Dire bonjour avec une réaction emoji
+    message.répondre("👋 Bonjour " + message.auteur + "! Comment vas-tu aujourd'hui?");
+    message.réaction("👋");
+  }
+  sinon {
+    // Commande inconnue
+    message.répondre("❓ Commande inconnue. Utilisez `" + PREFIX + "aide` pour voir les commandes disponibles.");
+  }
+});
