@@ -9,6 +9,7 @@ import PackagesPage from "@/pages/packages";
 import PackageDetailPage from "@/pages/package-detail";
 import DocumentationPage from "@/pages/documentation";
 import PlaygroundPage from "@/pages/playground";
+import PublishPackagePage from "@/pages/publish-package";
 
 function Router() {
   return (
