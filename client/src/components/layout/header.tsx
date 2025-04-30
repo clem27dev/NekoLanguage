@@ -13,6 +13,7 @@ const Header: React.FC = () => {
     { label: "Playground", path: "/playground" },
     { label: "Documentation", path: "/documentation" },
     { label: "Bibliothèques", path: "/packages" },
+    { label: "Publier", path: "/publish" },
     { label: "Communauté", path: "/community" },
   ];
 

@@ -19,6 +19,7 @@ function Router() {
       <Route path="/packages" component={PackagesPage} />
       <Route path="/packages/:id" component={PackageDetailPage} />
       <Route path="/documentation" component={DocumentationPage} />
+      <Route path="/publish" component={PublishPackagePage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -33,14 +33,14 @@ const HeroSection: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/documentation">
-              <a className="bg-neko-accent text-neko-dark px-6 py-3 rounded-full font-medium hover:bg-opacity-90 transition-colors text-center">
+              <button className="bg-neko-accent text-neko-dark px-6 py-3 rounded-full font-medium hover:bg-opacity-90 transition-colors text-center w-full sm:w-auto">
                 Commencer maintenant
-              </a>
+              </button>
             </Link>
             <Link href="/documentation">
-              <a className="bg-transparent border border-white px-6 py-3 rounded-full font-medium hover:bg-white hover:text-neko-primary transition-colors text-center">
+              <button className="bg-transparent border border-white px-6 py-3 rounded-full font-medium hover:bg-white hover:text-neko-primary transition-colors text-center w-full sm:w-auto">
                 Voir la documentation
-              </a>
+              </button>
             </Link>
           </div>
         </div>
