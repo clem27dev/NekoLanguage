@@ -133,7 +133,7 @@ function createDiscordModule() {
   discordModule.set('surMessage', (client, callback) => {
     if (typeof client === 'string') {
       // Si on a donné un token directement au lieu d'un client
-      console.warn("[NekoScript] Attention: 'surMessage' a reçu un token au lieu d'un client bot. Création automatique du client...");
+      console.warn("[NekoScript] ⚠️ Attention: 'surMessage' a reçu un token au lieu d'un client bot. Création automatique du client...");
       
       // Créer automatiquement un client avec ce token
       const newClient = new discord.Client({
@@ -147,7 +147,7 @@ function createDiscordModule() {
       
       // Se connecter avec le token
       newClient.login(client).catch(err => {
-        console.error("[NekoScript] Erreur de connexion Discord:", err.message);
+        console.error("[NekoScript] ❌ Erreur de connexion Discord:", err.message);
       });
       
       // Remplacer le client par le vrai client
@@ -159,11 +159,22 @@ function createDiscordModule() {
       throw new Error("[NekoScript] Le client Discord fourni n'est pas valide. Utilisez 'créerBot(token)' pour obtenir un client valide.");
     }
     
+    // Vérifier que le client a les intents nécessaires
+    const requiredIntents = [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent
+    ];
+    
     // Ajouter un événement pour écouter les messages
-    client.on('messageCreate', (message) => {
+    client.on('messageCreate', async (message) => {
       try {
-        // Conversion au format nekoScript
+        // Log pour débogage
+        console.log(`[NekoScript] 📨 Message reçu de ${message.author.username}: ${message.content}`);
+        
+        // Conversion au format nekoScript avec des méthodes améliorées
         const messageNeko = {
+          // Propriétés de base
           contenu: message.content,
           auteur: message.author.username,
           auteurId: message.author.id,
@@ -173,31 +184,82 @@ function createDiscordModule() {
           estBot: message.author.bot,
           mentions: message.mentions,
           
-          // Méthodes pour répondre
-          répondre: (texte) => {
-            if (typeof texte === 'string') {
-              return message.reply(texte);
-            } else {
-              return message.reply(texte);
+          // Méthodes pour répondre - prend en charge les chaînes, les objets et les embeds
+          répondre: async (contenu) => {
+            console.log(`[NekoScript] 📤 Réponse envoyée: ${typeof contenu === 'string' ? contenu : '[Objet/Embed]'}`);
+            
+            try {
+              // Format adapté selon le type
+              if (typeof contenu === 'string') {
+                return await message.reply(contenu);
+              } else if (contenu && typeof contenu === 'object') {
+                // Si c'est un embed ou une configuration complexe
+                return await message.reply(contenu);
+              } else {
+                return await message.reply({ content: String(contenu) });
+              }
+            } catch (error) {
+              console.error(`[NekoScript] ❌ Erreur lors de l'envoi de la réponse:`, error);
+              throw new Error(`Impossible d'envoyer la réponse: ${error.message}`);
             }
           },
-          réagir: (emoji) => message.react(emoji),
-          supprimer: () => message.delete(),
           
-          // Méthode pour obtenir le membre serveur (si dans un serveur)
+          // Réagir avec un émoji
+          réagir: async (emoji) => {
+            try {
+              console.log(`[NekoScript] 🎭 Réaction ajoutée: ${emoji}`);
+              return await message.react(emoji);
+            } catch (error) {
+              console.error(`[NekoScript] ❌ Erreur lors de l'ajout de la réaction:`, error);
+              throw new Error(`Impossible d'ajouter la réaction: ${error.message}`);
+            }
+          },
+          
+          // Supprimer le message
+          supprimer: async () => {
+            try {
+              console.log(`[NekoScript] 🗑️ Message supprimé`);
+              return await message.delete();
+            } catch (error) {
+              console.error(`[NekoScript] ❌ Erreur lors de la suppression du message:`, error);
+              throw new Error(`Impossible de supprimer le message: ${error.message}`);
+            }
+          },
+          
+          // Envoi direct dans le canal (sans répondre)
+          envoyerCanal: async (contenu) => {
+            try {
+              console.log(`[NekoScript] 📤 Message envoyé au canal`);
+              return await message.channel.send(contenu);
+            } catch (error) {
+              console.error(`[NekoScript] ❌ Erreur lors de l'envoi au canal:`, error);
+              throw new Error(`Impossible d'envoyer au canal: ${error.message}`);
+            }
+          },
+          
+          // Méthodes utilitaires
           getMembre: () => message.member,
+          getCanal: () => message.channel,
+          getServeur: () => message.guild,
           
-          // Méthode pour obtenir le canal
-          getCanal: () => message.channel
+          // Obtenir des informations sur l'auteur
+          getAuteurInfo: () => ({
+            nom: message.author.username,
+            id: message.author.id,
+            tag: message.author.tag,
+            avatar: message.author.displayAvatarURL(),
+            bot: message.author.bot
+          })
         };
         
         // Appel du callback utilisateur avec le message formaté pour nekoScript
-        callback(messageNeko);
+        await Promise.resolve(callback(messageNeko));
       } catch (err) {
-        console.error("[NekoScript] Erreur lors du traitement du message:", err);
+        console.error("[NekoScript] ❌ Erreur lors du traitement du message:", err);
       }
     });
     
+    console.log("[NekoScript] ✅ Gestionnaire de messages configuré");
     return client; // Retourner le client pour permettre le chaînage
   });
   
@@ -227,6 +289,9 @@ function createDiscordModule() {
   
   // Fonction pour configurer le statut du bot
   discordModule.set('changerStatut', (client, type, nom) => {
+    // Log pour débogage
+    console.log(`[NekoScript] Changement du statut du bot: ${type} ${nom}`);
+    
     const types = {
       'joue': ActivityType.Playing,
       'regarde': ActivityType.Watching,
@@ -235,7 +300,30 @@ function createDiscordModule() {
       'compétition': ActivityType.Competing
     };
     
-    client.user.setActivity(nom, { type: types[type] || ActivityType.Playing });
+    try {
+      // Vérifier que le client est bien connecté
+      if (!client || !client.user) {
+        console.error('[NekoScript] ❌ Erreur: impossible de changer le statut, bot non connecté');
+        return false;
+      }
+      
+      // Appliquer le statut personnalisé
+      const activityType = types[type] || ActivityType.Playing;
+      
+      client.user.setPresence({
+        activities: [{
+          name: nom,
+          type: activityType
+        }],
+        status: 'online'
+      });
+      
+      console.log(`[NekoScript] ✅ Statut du bot modifié avec succès: ${type} ${nom}`);
+      return true;
+    } catch (error) {
+      console.error(`[NekoScript] ❌ Erreur lors du changement de statut: ${error.message}`);
+      return false;
+    }
   });
   
   // Fonction pour obtenir les membres d'un serveur

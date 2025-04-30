@@ -177,12 +177,36 @@ class NekoInterpreter {
   }
 
   evaluateIfStatement(node) {
-    const condition = this.evaluateSimpleExpression(node.condition);
+    console.log("[NekoScript] Évaluation d'une structure conditionnelle");
     
-    if (condition) {
-      for (const statement of node.body) {
-        this.evaluate(statement);
+    try {
+      // Évaluer la condition
+      const condition = this.evaluateSimpleExpression(node.condition);
+      console.log(`[NekoScript] Résultat de la condition: ${condition}`);
+      
+      let result;
+      
+      // Exécuter le bloc if si la condition est vraie
+      if (condition) {
+        console.log("[NekoScript] Exécution du bloc 'if'");
+        for (const statement of node.body) {
+          result = this.evaluate(statement);
+        }
+      } 
+      // Sinon, exécuter le bloc else si disponible
+      else if (node.elseBody && node.elseBody.length > 0) {
+        console.log("[NekoScript] Exécution du bloc 'else'");
+        for (const statement of node.elseBody) {
+          result = this.evaluate(statement);
+        }
+      } else {
+        console.log("[NekoScript] Pas de bloc 'else', condition non satisfaite");
       }
+      
+      return result;
+    } catch (error) {
+      console.error(`[NekoScript] Erreur dans l'évaluation d'une condition: ${error.message}`);
+      throw error;
     }
   }
 

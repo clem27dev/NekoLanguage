@@ -574,6 +574,16 @@ Note: Le fichier n'a pas pu être écrit sur disque.`);
             // Ajouter le client Discord à l'environnement d'exécution
             interpreter.environment.set('_discordClient', client);
             
+            // Ajouter des fonctions utilitaires pour le traitement des commandes Discord
+            interpreter.environment.set('parseCommandes', (commandPrefix, messageContent) => {
+              if (!messageContent.startsWith(commandPrefix)) return null;
+              
+              const args = messageContent.slice(commandPrefix.length).trim().split(/ +/);
+              const commandName = args.shift().toLowerCase();
+              
+              return { commandName, args };
+            });
+            
             // Exécuter le code nekoScript
             console.log(chalk.yellow('🔄 Exécution du code nekoScript...'));
             
