@@ -527,32 +527,98 @@ Note: Le fichier n'a pas pu être écrit sur disque.`);
         console.log(chalk.green('✅ Token Discord détecté. Connexion au service Discord...'));
         console.log(chalk.yellow('⏳ Démarrage du bot Discord... (Ctrl+C pour arrêter)'));
         
-        // Dans une vraie implémentation, on exécuterait le fichier avec le vrai interpréteur nekoScript
-        // et on laisserait tourner le processus
+        // Exécution réelle du bot Discord avec l'API Discord.js
         try {
-          // Simulations d'événements Discord (pour montrer au développeur que ça fonctionne)
-          console.log(chalk.green('🤖 Bot connecté!'));
+          // Importer discord.js
+          const discord = require('discord.js');
+          const { GatewayIntentBits, Client } = discord;
+          const { NekoInterpreter } = require('../interpreter');
           
-          // Pour l'exemple, on montre quelques événements fictifs
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          console.log(chalk.blue('🔄 Événement: Bot connecté à 3 serveurs'));
+          console.log(chalk.green('🔄 Initialisation du client Discord.js...'));
           
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          console.log(chalk.blue('🔄 Événement: Message reçu de Utilisateur123: "Bonjour bot!"'));
+          // Créer un client Discord réel
+          const client = new Client({
+            intents: [
+              GatewayIntentBits.Guilds,
+              GatewayIntentBits.GuildMessages,
+              GatewayIntentBits.GuildMembers,
+              GatewayIntentBits.MessageContent,
+              GatewayIntentBits.DirectMessages
+            ]
+          });
           
-          await new Promise(resolve => setTimeout(resolve, 800));
-          console.log(chalk.blue('🔄 Événement: Bot a répondu: "Bonjour!"'));
+          // Définir les gestionnaires d'événements de base
+          client.once('ready', () => {
+            console.log(chalk.green(`✅ Bot connecté en tant que ${client.user.tag}!`));
+            console.log(chalk.blue(`📊 Connecté à ${client.guilds.cache.size} serveurs`));
+            
+            // Optionnel : Changer le statut du bot pour indiquer qu'il est alimenté par nekoScript
+            client.user.setActivity("créé avec nekoScript 🐱", { type: discord.ActivityType.Playing });
+          });
           
-          // Garder le processus en vie
-          console.log(chalk.yellow('\n⏳ Bot en exécution... Appuyez sur Ctrl+C pour arrêter.\n'));
+          // Gérer les erreurs
+          client.on('error', (error) => {
+            console.error(chalk.red(`❌ Erreur Discord: ${error.message}`));
+          });
           
-          // Dans une vraie implémentation, on attendrait indéfiniment ici
-          // await new Promise(resolve => { /* never resolves */ });
+          // Se connecter à Discord
+          console.log(chalk.yellow('🔄 Connexion à Discord avec le token fourni...'));
           
-          // Pour la simulation, on retourne un message après un délai
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          return chalk.green('🚀 Bot Discord en exécution! Appuyez sur Ctrl+C pour arrêter.\n') +
-                 chalk.yellow('Note: Dans une vraie exécution, le bot resterait connecté jusqu\'à ce que vous arrêtiez le processus.');
+          try {
+            await client.login(token);
+            console.log(chalk.green('✅ Authentification réussie!'));
+            
+            // Créer une instance de l'interpréteur nekoScript
+            const interpreter = new NekoInterpreter();
+            
+            // Ajouter le client Discord à l'environnement d'exécution
+            interpreter.environment.set('_discordClient', client);
+            
+            // Exécuter le code nekoScript
+            console.log(chalk.yellow('🔄 Exécution du code nekoScript...'));
+            
+            try {
+              // Exécuter le script
+              await interpreter.execute(content, {
+                realExecution: true, 
+                verbose: true
+              });
+              
+              console.log(chalk.green('✅ Code nekoScript exécuté avec succès!'));
+              console.log(chalk.blue('📝 Le bot est maintenant actif et répond aux messages dans Discord.'));
+              console.log(chalk.yellow('⚠️ Appuyez sur Ctrl+C pour arrêter le bot.\n'));
+              
+              // Afficher un message toutes les minutes pour montrer que le bot est toujours actif
+              const intervalId = setInterval(() => {
+                console.log(chalk.blue(`🔄 Bot Discord toujours actif - ${new Date().toLocaleTimeString()}`));
+              }, 60000);
+              
+              // Garder le processus en vie
+              process.stdin.resume();
+              
+              // Gérer la fermeture propre
+              process.on('SIGINT', () => {
+                clearInterval(intervalId);
+                console.log(chalk.yellow('\n🛑 Arrêt du bot Discord...'));
+                client.destroy();
+                process.exit(0);
+              });
+              
+              // Cette partie du code ne sera jamais atteinte car le processus continue de s'exécuter
+              return ''; 
+            } catch (error) {
+              console.error(chalk.red(`❌ Erreur d'exécution nekoScript: ${error.message}`));
+              client.destroy();
+              throw error;
+            }
+          } catch (loginError) {
+            console.error(chalk.red(`❌ Erreur de connexion à Discord: ${loginError.message}`));
+            if (loginError.message.includes('token')) {
+              console.error(chalk.yellow('⚠️ Vérifiez que votre token Discord est valide.'));
+              console.error(chalk.yellow('⚠️ Vous pouvez obtenir un token sur https://discord.com/developers/applications'));
+            }
+            throw loginError;
+          }
         } catch (err) {
           return chalk.red(`❌ Erreur lors de l'exécution du bot Discord: ${err.message}`);
         }
@@ -569,14 +635,139 @@ Note: Le fichier n'a pas pu être écrit sur disque.`);
         console.log(chalk.green(`✅ Port ${port} détecté. Démarrage du serveur web...`));
         console.log(chalk.yellow('⏳ Serveur en cours de démarrage... (Ctrl+C pour arrêter)'));
         
-        // Simulations d'un serveur web démarré
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        console.log(chalk.green(`🚀 Serveur démarré sur http://localhost:${port}`));
-        
-        // Pour la simulation, on retourne un message après un délai
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return chalk.green('🚀 Application web en exécution! Appuyez sur Ctrl+C pour arrêter.\n') +
-               chalk.blue(`📄 Serveur disponible sur: http://localhost:${port}`);
+        // Exécution réelle d'une application web avec Express
+        try {
+          // Importer les modules nécessaires
+          const express = require('express');
+          const { NekoInterpreter } = require('../interpreter');
+          
+          console.log(chalk.green('🔄 Initialisation du serveur Express...'));
+          
+          // Créer une application Express
+          const app = express();
+          const http = require('http');
+          const server = http.createServer(app);
+          
+          // Configuration de base
+          app.use(express.json());
+          app.use(express.urlencoded({ extended: true }));
+          
+          // Configurer un middleware pour les journaux
+          app.use((req, res, next) => {
+            console.log(chalk.blue(`📝 ${req.method} ${req.url}`));
+            const startTime = Date.now();
+            res.on('finish', () => {
+              const duration = Date.now() - startTime;
+              console.log(chalk.blue(`✓ ${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`));
+            });
+            next();
+          });
+          
+          // Route par défaut
+          app.get('/', (req, res) => {
+            res.send(`
+              <html>
+                <head>
+                  <title>Application nekoScript</title>
+                  <style>
+                    body {
+                      font-family: Arial, sans-serif;
+                      margin: 0;
+                      padding: 40px;
+                      background-color: #f7f7f7;
+                      color: #333;
+                    }
+                    .container {
+                      max-width: 800px;
+                      margin: 0 auto;
+                      background-color: white;
+                      padding: 30px;
+                      border-radius: 10px;
+                      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    }
+                    h1 {
+                      color: #8c52ff;
+                      border-bottom: 2px solid #8c52ff;
+                      padding-bottom: 10px;
+                    }
+                    .neko-icon {
+                      font-size: 50px;
+                      text-align: center;
+                      margin: 20px 0;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <h1>Application nekoScript</h1>
+                    <div class="neko-icon">🐱</div>
+                    <p>Votre serveur web est en cours d'exécution. Cette page est la route par défaut.</p>
+                    <p>Pour personnaliser votre application, ajoutez des routes et du contenu dans votre code nekoScript.</p>
+                  </div>
+                </body>
+              </html>
+            `);
+          });
+          
+          // Créer une instance de l'interpréteur nekoScript
+          const interpreter = new NekoInterpreter();
+          
+          // Ajouter le serveur Express à l'environnement d'exécution
+          interpreter.environment.set('_expressApp', app);
+          interpreter.environment.set('_httpServer', server);
+          
+          // Exécuter le code nekoScript
+          console.log(chalk.yellow('🔄 Exécution du code nekoScript...'));
+          
+          try {
+            // Exécuter le script
+            await interpreter.execute(content, {
+              realExecution: true,
+              verbose: true
+            });
+            
+            // Démarrer le serveur sur le port spécifié
+            server.listen(port, '0.0.0.0', () => {
+              console.log(chalk.green(`✅ Serveur démarré sur http://localhost:${port}`));
+              console.log(chalk.blue('📝 Le serveur web est maintenant actif et répond aux requêtes.'));
+              console.log(chalk.yellow('⚠️ Appuyez sur Ctrl+C pour arrêter le serveur.\n'));
+            });
+            
+            // Gérer les erreurs du serveur
+            server.on('error', (err) => {
+              if (err.code === 'EADDRINUSE') {
+                console.error(chalk.red(`❌ Port ${port} déjà utilisé. Essayez un autre port.`));
+                process.exit(1);
+              } else {
+                console.error(chalk.red(`❌ Erreur serveur: ${err.message}`));
+              }
+            });
+            
+            // Afficher des statistiques périodiques
+            const intervalId = setInterval(() => {
+              console.log(chalk.blue(`🔄 Serveur web toujours actif - ${new Date().toLocaleTimeString()}`));
+            }, 60000);
+            
+            // Garder le processus en vie
+            process.stdin.resume();
+            
+            // Gérer la fermeture propre
+            process.on('SIGINT', () => {
+              clearInterval(intervalId);
+              console.log(chalk.yellow('\n🛑 Arrêt du serveur web...'));
+              server.close();
+              process.exit(0);
+            });
+            
+            // Cette partie du code ne sera jamais atteinte car le processus continue de s'exécuter
+            return '';
+          } catch (error) {
+            console.error(chalk.red(`❌ Erreur d'exécution nekoScript: ${error.message}`));
+            throw error;
+          }
+        } catch (err) {
+          return chalk.red(`❌ Erreur lors de l'exécution du serveur web: ${err.message}`);
+        }
       }
       
       // Mode d'exécution spécial pour les jeux
@@ -585,15 +776,382 @@ Note: Le fichier n'a pas pu être écrit sur disque.`);
         
         console.log(chalk.yellow('⏳ Initialisation du moteur de jeu...'));
         
-        // Simulations d'un jeu démarré
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        console.log(chalk.green('🚀 Moteur de jeu initialisé!'));
-        console.log(chalk.blue('🎮 Contrôles: Utilisez les flèches directionnelles pour vous déplacer.'));
-        
-        // Pour la simulation, on retourne un message après un délai
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return chalk.green('🚀 Jeu en exécution! Appuyez sur Ctrl+C pour arrêter.\n') +
-               chalk.yellow('Note: Dans une vraie exécution, une fenêtre de jeu s\'ouvrirait.');
+        // Exécution réelle d'un jeu avec Canvas/WebSocket
+        try {
+          // Importer les modules nécessaires
+          const http = require('http');
+          const express = require('express');
+          const WebSocket = require('websocket');
+          const { NekoInterpreter } = require('../interpreter');
+          
+          console.log(chalk.green('🔄 Initialisation du moteur de jeu...'));
+          
+          // Créer un serveur HTTP pour héberger le jeu
+          const app = express();
+          const server = http.createServer(app);
+          
+          // Configuration par défaut
+          app.use(express.static(__dirname + '/../assets/game'));
+          
+          // Page d'accueil du jeu
+          app.get('/', (req, res) => {
+            res.send(`
+              <html>
+                <head>
+                  <title>Jeu nekoScript</title>
+                  <style>
+                    body {
+                      margin: 0;
+                      padding: 0;
+                      overflow: hidden;
+                      background-color: #111;
+                      color: white;
+                      font-family: Arial, sans-serif;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      height: 100vh;
+                    }
+                    #game-container {
+                      width: 800px;
+                      height: 600px;
+                      border: 2px solid #8c52ff;
+                      position: relative;
+                      background-color: #222;
+                    }
+                    canvas {
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                    }
+                    #loading {
+                      position: absolute;
+                      top: 50%;
+                      left: 50%;
+                      transform: translate(-50%, -50%);
+                      font-size: 24px;
+                      color: #8c52ff;
+                    }
+                    #info {
+                      position: absolute;
+                      bottom: 10px;
+                      left: 10px;
+                      font-size: 12px;
+                      color: #aaa;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <div id="game-container">
+                    <canvas id="game-canvas" width="800" height="600"></canvas>
+                    <div id="loading">Chargement du jeu nekoScript... 🐱</div>
+                    <div id="info">
+                      Contrôles:<br>
+                      ↑↓←→ : Déplacer<br>
+                      Espace : Action
+                    </div>
+                  </div>
+                  
+                  <script>
+                    // Configuration du client WebSocket
+                    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+                    const wsUrl = protocol + window.location.host + '/game-ws';
+                    let socket;
+                    let connected = false;
+                    
+                    // Référence au canvas
+                    const canvas = document.getElementById('game-canvas');
+                    const ctx = canvas.getContext('2d');
+                    const loadingElement = document.getElementById('loading');
+                    
+                    // Variables du jeu
+                    const gameState = {
+                      player: { x: 400, y: 300, size: 30, color: '#8c52ff', speed: 5 },
+                      entities: [],
+                      keys: { up: false, down: false, left: false, right: false, space: false }
+                    };
+                    
+                    // Fonction d'initialisation
+                    function init() {
+                      // Connexion WebSocket
+                      socket = new WebSocket(wsUrl);
+                      
+                      socket.onopen = () => {
+                        console.log('Connexion WebSocket établie');
+                        connected = true;
+                        loadingElement.style.display = 'none';
+                        
+                        // Envoyer un message d'initialisation
+                        socket.send(JSON.stringify({ type: 'init' }));
+                      };
+                      
+                      socket.onclose = () => {
+                        console.log('Connexion WebSocket fermée');
+                        connected = false;
+                        loadingElement.textContent = 'Connexion perdue. Rafraîchissez la page pour reconnecter.';
+                        loadingElement.style.display = 'block';
+                      };
+                      
+                      socket.onerror = (error) => {
+                        console.error('Erreur WebSocket:', error);
+                      };
+                      
+                      socket.onmessage = (event) => {
+                        try {
+                          const message = JSON.parse(event.data);
+                          
+                          // Mise à jour du jeu selon le message reçu
+                          if (message.type === 'update') {
+                            if (message.player) gameState.player = message.player;
+                            if (message.entities) gameState.entities = message.entities;
+                          }
+                        } catch (e) {
+                          console.error('Erreur parsing message:', e);
+                        }
+                      };
+                      
+                      // Gestionnaires d'événements clavier
+                      window.addEventListener('keydown', handleKeyDown);
+                      window.addEventListener('keyup', handleKeyUp);
+                      
+                      // Démarrer la boucle de jeu
+                      requestAnimationFrame(gameLoop);
+                    }
+                    
+                    // Gestion des touches
+                    function handleKeyDown(e) {
+                      updateKey(e.code, true);
+                      if (connected) {
+                        socket.send(JSON.stringify({ 
+                          type: 'input', 
+                          keys: gameState.keys 
+                        }));
+                      }
+                    }
+                    
+                    function handleKeyUp(e) {
+                      updateKey(e.code, false);
+                      if (connected) {
+                        socket.send(JSON.stringify({ 
+                          type: 'input', 
+                          keys: gameState.keys 
+                        }));
+                      }
+                    }
+                    
+                    function updateKey(code, pressed) {
+                      switch(code) {
+                        case 'ArrowUp': gameState.keys.up = pressed; break;
+                        case 'ArrowDown': gameState.keys.down = pressed; break;
+                        case 'ArrowLeft': gameState.keys.left = pressed; break;
+                        case 'ArrowRight': gameState.keys.right = pressed; break;
+                        case 'Space': gameState.keys.space = pressed; break;
+                      }
+                    }
+                    
+                    // Boucle de jeu
+                    function gameLoop() {
+                      // Effacer le canvas
+                      ctx.fillStyle = '#222';
+                      ctx.fillRect(0, 0, canvas.width, canvas.height);
+                      
+                      // Dessiner le joueur
+                      ctx.fillStyle = gameState.player.color;
+                      ctx.beginPath();
+                      ctx.arc(
+                        gameState.player.x, 
+                        gameState.player.y, 
+                        gameState.player.size / 2, 
+                        0, 
+                        Math.PI * 2
+                      );
+                      ctx.fill();
+                      
+                      // Dessiner les entités
+                      gameState.entities.forEach(entity => {
+                        ctx.fillStyle = entity.color || '#fff';
+                        if (entity.type === 'circle') {
+                          ctx.beginPath();
+                          ctx.arc(entity.x, entity.y, entity.size / 2, 0, Math.PI * 2);
+                          ctx.fill();
+                        } else {
+                          ctx.fillRect(entity.x, entity.y, entity.width, entity.height);
+                        }
+                      });
+                      
+                      // Logique de déplacement locale pour fluidité
+                      if (!connected) {
+                        if (gameState.keys.up) gameState.player.y -= gameState.player.speed;
+                        if (gameState.keys.down) gameState.player.y += gameState.player.speed;
+                        if (gameState.keys.left) gameState.player.x -= gameState.player.speed;
+                        if (gameState.keys.right) gameState.player.x += gameState.player.speed;
+                      }
+                      
+                      // Continuer la boucle
+                      requestAnimationFrame(gameLoop);
+                    }
+                    
+                    // Initialiser le jeu
+                    init();
+                  </script>
+                </body>
+              </html>
+            `);
+          });
+          
+          // Créer un serveur WebSocket
+          const wsServer = new WebSocket.server({
+            httpServer: server,
+            autoAcceptConnections: false,
+            path: '/game-ws'
+          });
+          
+          // Liste des connexions actives
+          const connections = new Set();
+          
+          // État du jeu
+          const gameState = {
+            players: new Map(),
+            entities: []
+          };
+          
+          // Gestionnaire des connexions WebSocket
+          wsServer.on('request', (request) => {
+            try {
+              // Accepter la connexion
+              const connection = request.accept(null, request.origin);
+              const connectionId = Date.now() + Math.random().toString(36).substr(2);
+              
+              console.log(chalk.blue(`🎮 Nouveau joueur connecté: ${connectionId}`));
+              connections.add(connection);
+              
+              // Créer un joueur
+              gameState.players.set(connectionId, {
+                x: 400,
+                y: 300,
+                size: 30,
+                color: '#' + Math.floor(Math.random()*16777215).toString(16),
+                speed: 5,
+                keys: { up: false, down: false, left: false, right: false, space: false }
+              });
+              
+              // Gestionnaire de messages
+              connection.on('message', (message) => {
+                if (message.type === 'utf8') {
+                  try {
+                    const data = JSON.parse(message.utf8Data);
+                    
+                    // Traiter les entrées du joueur
+                    if (data.type === 'input' && data.keys) {
+                      const player = gameState.players.get(connectionId);
+                      if (player) {
+                        player.keys = data.keys;
+                      }
+                    }
+                  } catch (e) {
+                    console.error(chalk.red(`❌ Erreur de parsing message: ${e.message}`));
+                  }
+                }
+              });
+              
+              // Gérer la fermeture
+              connection.on('close', () => {
+                console.log(chalk.yellow(`👋 Joueur déconnecté: ${connectionId}`));
+                connections.delete(connection);
+                gameState.players.delete(connectionId);
+              });
+            } catch (err) {
+              console.error(chalk.red(`❌ Erreur de connexion WebSocket: ${err.message}`));
+            }
+          });
+          
+          // Créer une instance de l'interpréteur nekoScript
+          const interpreter = new NekoInterpreter();
+          
+          // Ajouter le jeu à l'environnement d'exécution
+          interpreter.environment.set('_gameState', gameState);
+          interpreter.environment.set('_gameServer', wsServer);
+          
+          // Exécuter le code nekoScript
+          console.log(chalk.yellow('🔄 Exécution du code nekoScript...'));
+          
+          try {
+            // Exécuter le script
+            await interpreter.execute(content, {
+              realExecution: true,
+              verbose: true
+            });
+            
+            // Démarrer la boucle de jeu côté serveur
+            const gameLoop = setInterval(() => {
+              // Mettre à jour tous les joueurs selon leurs touches
+              for (const [id, player] of gameState.players) {
+                if (player.keys.up) player.y -= player.speed;
+                if (player.keys.down) player.y += player.speed;
+                if (player.keys.left) player.x -= player.speed;
+                if (player.keys.right) player.x += player.speed;
+                
+                // Limites du jeu
+                player.x = Math.max(15, Math.min(785, player.x));
+                player.y = Math.max(15, Math.min(585, player.y));
+              }
+              
+              // Envoyer les mises à jour à tous les clients
+              connections.forEach(connection => {
+                if (connection.connected) {
+                  connection.send(JSON.stringify({
+                    type: 'update',
+                    players: Array.from(gameState.players.values()),
+                    entities: gameState.entities
+                  }));
+                }
+              });
+            }, 1000 / 60); // 60 FPS
+            
+            // Démarrer le serveur HTTP
+            const gamePort = 8080; // Port différent pour le jeu
+            server.listen(gamePort, '0.0.0.0', () => {
+              console.log(chalk.green(`✅ Serveur de jeu démarré sur http://localhost:${gamePort}`));
+              console.log(chalk.blue('📝 Le jeu est maintenant actif et attend des joueurs.'));
+              console.log(chalk.yellow('⚠️ Appuyez sur Ctrl+C pour arrêter le serveur de jeu.\n'));
+            });
+            
+            // Gérer les erreurs du serveur
+            server.on('error', (err) => {
+              if (err.code === 'EADDRINUSE') {
+                console.error(chalk.red(`❌ Port ${gamePort} déjà utilisé. Essayez un autre port.`));
+                process.exit(1);
+              } else {
+                console.error(chalk.red(`❌ Erreur serveur: ${err.message}`));
+              }
+            });
+            
+            // Afficher des statistiques périodiques
+            const intervalId = setInterval(() => {
+              console.log(chalk.blue(`🔄 Jeu toujours actif - ${new Date().toLocaleTimeString()} - ${connections.size} joueurs connectés`));
+            }, 60000);
+            
+            // Garder le processus en vie
+            process.stdin.resume();
+            
+            // Gérer la fermeture propre
+            process.on('SIGINT', () => {
+              clearInterval(intervalId);
+              clearInterval(gameLoop);
+              console.log(chalk.yellow('\n🛑 Arrêt du serveur de jeu...'));
+              server.close();
+              process.exit(0);
+            });
+            
+            // Cette partie du code ne sera jamais atteinte car le processus continue de s'exécuter
+            return '';
+          } catch (error) {
+            console.error(chalk.red(`❌ Erreur d'exécution nekoScript: ${error.message}`));
+            throw error;
+          }
+        } catch (err) {
+          return chalk.red(`❌ Erreur lors de l'exécution du jeu: ${err.message}`);
+        }
       }
       
       // Pour les autres types de programmes, exécution normale
