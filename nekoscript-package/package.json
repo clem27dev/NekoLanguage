@@ -1,16 +1,13 @@
 {
-  "name": "nekoscript",
+  "name": "neko-script-lang",
   "version": "1.0.0",
   "description": "Un langage de programmation en français pour créer des sites web, des jeux et des bots Discord",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "src/index.js",
   "bin": {
     "neko-script": "./bin/neko-script.js"
   },
   "scripts": {
-    "build": "tsc",
-    "prepare": "npm run build",
-    "test": "jest",
+    "test": "echo \"No tests configured\"",
     "start": "node ./bin/neko-script.js"
   },
   "repository": {
@@ -38,7 +35,7 @@
   },
   "files": [
     "bin/",
-    "lib/",
+    "src/",
     "README.md",
     "LICENSE"
   ],
