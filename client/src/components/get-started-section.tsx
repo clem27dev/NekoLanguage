@@ -53,6 +53,11 @@ const GetStartedSection: React.FC = () => {
           >
             {isLoading ? "Installation..." : "Guide d'installation"}
           </button>
+          <Link href="/playground">
+            <a className="bg-neko-secondary text-white px-6 py-3 rounded-full font-medium hover:bg-opacity-90 transition-colors">
+              Playground en ligne
+            </a>
+          </Link>
           <Link href="/documentation">
             <a className="bg-transparent border border-white px-6 py-3 rounded-full font-medium hover:bg-white hover:text-neko-primary transition-colors">
               Tutoriel débutant

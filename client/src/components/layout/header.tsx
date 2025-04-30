@@ -10,6 +10,7 @@ const Header: React.FC = () => {
 
   const menuItems = [
     { label: "Accueil", path: "/" },
+    { label: "Playground", path: "/playground" },
     { label: "Documentation", path: "/documentation" },
     { label: "Bibliothèques", path: "/packages" },
     { label: "Communauté", path: "/community" },

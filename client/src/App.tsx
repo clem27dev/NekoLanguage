@@ -8,11 +8,13 @@ import Home from "@/pages/home";
 import PackagesPage from "@/pages/packages";
 import PackageDetailPage from "@/pages/package-detail";
 import DocumentationPage from "@/pages/documentation";
+import PlaygroundPage from "@/pages/playground";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/playground" component={PlaygroundPage} />
       <Route path="/packages" component={PackagesPage} />
       <Route path="/packages/:id" component={PackageDetailPage} />
       <Route path="/documentation" component={DocumentationPage} />
