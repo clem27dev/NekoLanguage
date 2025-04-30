@@ -1,6 +1,6 @@
 {
   "name": "neko-script-lang",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Un langage de programmation en français pour créer des sites web, des jeux et des bots Discord",
   "main": "src/index.js",
   "bin": {
@@ -45,6 +45,7 @@
     "inquirer": "^8.2.5",
     "node-fetch": "^2.6.7",
     "discord.js": "^14.12.1",
+    "discord-api-types": "^0.37.56",
     "express": "^4.18.2",
     "axios": "^1.4.0",
     "sqlite3": "^5.1.6",

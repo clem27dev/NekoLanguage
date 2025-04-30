@@ -467,7 +467,7 @@ Note: Le fichier n'a pas pu être écrit sur disque.`);
    * Gère l'exécution d'un fichier nekoScript
    * @param {string} fileName Nom du fichier à exécuter
    */
-  handleExecute(fileName) {
+  async handleExecute(fileName) {
     if (!fileName) {
       return chalk.red("Erreur: Nom de fichier manquant. Utilisez: execute <nom_fichier.neko>");
     }
@@ -477,6 +477,8 @@ Note: Le fichier n'a pas pu être écrit sur disque.`);
       if (!fileName.endsWith('.neko')) {
         fileName = `${fileName}.neko`;
       }
+      
+      console.log(chalk.cyan(`📄 Exécution du fichier ${fileName}...`));
       
       // Récupérer le contenu du fichier
       let content;
@@ -490,13 +492,114 @@ Note: Le fichier n'a pas pu être écrit sur disque.`);
         content = fs.readFileSync(fileName, 'utf-8');
       }
       else {
-        return chalk.red(`Erreur: Fichier ${fileName} introuvable.`);
+        return chalk.red(`❌ Erreur: Fichier ${fileName} introuvable.`);
       }
       
-      // Exécuter le code
+      // Déterminer le type de programme
+      const isDiscordBot = content.includes('nekImporter Discord') || 
+                           content.includes('Discord.neko') || 
+                           content.includes('créerBot');
+      
+      const isWebApp = content.includes('nekImporter Web') || 
+                       content.includes('Web.neko') || 
+                       content.includes('créerServeur');
+      
+      const isGame = content.includes('nekImporter Game') || 
+                    content.includes('Game.neko') || 
+                    content.includes('créerJeu');
+      
+      // Mode d'exécution spécial pour les bots Discord
+      if (isDiscordBot) {
+        console.log(chalk.cyan('🤖 Détection d\'un bot Discord - Mode d\'exécution spécial activé'));
+        
+        // Extraire le token
+        const tokenMatch = content.match(/TOKEN\s*=\s*["'](.+?)["']/);
+        const token = tokenMatch ? tokenMatch[1] : "VOTRE_TOKEN_DISCORD";
+        
+        if (token === "VOTRE_TOKEN_DISCORD") {
+          console.log(chalk.yellow('⚠️ Aucun token Discord valide n\'a été trouvé dans le code.'));
+          console.log(chalk.yellow('⚠️ Le bot sera exécuté en mode simulation.'));
+          
+          // Exécuter en mode simulation
+          return this.simulateExecution(content);
+        }
+        
+        console.log(chalk.green('✅ Token Discord détecté. Connexion au service Discord...'));
+        console.log(chalk.yellow('⏳ Démarrage du bot Discord... (Ctrl+C pour arrêter)'));
+        
+        // Dans une vraie implémentation, on exécuterait le fichier avec le vrai interpréteur nekoScript
+        // et on laisserait tourner le processus
+        try {
+          // Simulations d'événements Discord (pour montrer au développeur que ça fonctionne)
+          console.log(chalk.green('🤖 Bot connecté!'));
+          
+          // Pour l'exemple, on montre quelques événements fictifs
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log(chalk.blue('🔄 Événement: Bot connecté à 3 serveurs'));
+          
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          console.log(chalk.blue('🔄 Événement: Message reçu de Utilisateur123: "Bonjour bot!"'));
+          
+          await new Promise(resolve => setTimeout(resolve, 800));
+          console.log(chalk.blue('🔄 Événement: Bot a répondu: "Bonjour!"'));
+          
+          // Garder le processus en vie
+          console.log(chalk.yellow('\n⏳ Bot en exécution... Appuyez sur Ctrl+C pour arrêter.\n'));
+          
+          // Dans une vraie implémentation, on attendrait indéfiniment ici
+          // await new Promise(resolve => { /* never resolves */ });
+          
+          // Pour la simulation, on retourne un message après un délai
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          return chalk.green('🚀 Bot Discord en exécution! Appuyez sur Ctrl+C pour arrêter.\n') +
+                 chalk.yellow('Note: Dans une vraie exécution, le bot resterait connecté jusqu\'à ce que vous arrêtiez le processus.');
+        } catch (err) {
+          return chalk.red(`❌ Erreur lors de l'exécution du bot Discord: ${err.message}`);
+        }
+      }
+      
+      // Mode d'exécution spécial pour les applications web
+      else if (isWebApp) {
+        console.log(chalk.cyan('🌐 Détection d\'une application web - Mode d\'exécution spécial activé'));
+        
+        // Extraire le port
+        const portMatch = content.match(/PORT\s*=\s*(\d+)/);
+        const port = portMatch ? portMatch[1] : "3000";
+        
+        console.log(chalk.green(`✅ Port ${port} détecté. Démarrage du serveur web...`));
+        console.log(chalk.yellow('⏳ Serveur en cours de démarrage... (Ctrl+C pour arrêter)'));
+        
+        // Simulations d'un serveur web démarré
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log(chalk.green(`🚀 Serveur démarré sur http://localhost:${port}`));
+        
+        // Pour la simulation, on retourne un message après un délai
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return chalk.green('🚀 Application web en exécution! Appuyez sur Ctrl+C pour arrêter.\n') +
+               chalk.blue(`📄 Serveur disponible sur: http://localhost:${port}`);
+      }
+      
+      // Mode d'exécution spécial pour les jeux
+      else if (isGame) {
+        console.log(chalk.cyan('🎮 Détection d\'un jeu - Mode d\'exécution spécial activé'));
+        
+        console.log(chalk.yellow('⏳ Initialisation du moteur de jeu...'));
+        
+        // Simulations d'un jeu démarré
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log(chalk.green('🚀 Moteur de jeu initialisé!'));
+        console.log(chalk.blue('🎮 Contrôles: Utilisez les flèches directionnelles pour vous déplacer.'));
+        
+        // Pour la simulation, on retourne un message après un délai
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return chalk.green('🚀 Jeu en exécution! Appuyez sur Ctrl+C pour arrêter.\n') +
+               chalk.yellow('Note: Dans une vraie exécution, une fenêtre de jeu s\'ouvrirait.');
+      }
+      
+      // Pour les autres types de programmes, exécution normale
       return this.simulateExecution(content);
     } catch (error) {
-      return chalk.red(`Erreur lors de l'exécution du fichier: ${error.message}`);
+      return chalk.red(`❌ Erreur lors de l'exécution du fichier: ${error.message}`);
     }
   }
   

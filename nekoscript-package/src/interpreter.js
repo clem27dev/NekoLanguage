@@ -14,26 +14,93 @@ class NekoInterpreter {
     this.initializeStandardLibrary();
   }
 
-  async execute(code) {
+  async execute(code, options = {}) {
     try {
+      // Options par défaut
+      const defaultOptions = {
+        realExecution: true,     // Exécution réelle (vs simulation)
+        verbose: false,          // Mode verbeux pour le débogage
+        envVars: {},             // Variables d'environnement
+        workingDir: process.cwd(), // Répertoire de travail
+        parseOnly: false,        // Uniquement analyser sans exécuter
+        debugInfo: false,        // Afficher des infos de débogage supplémentaires
+      };
+      
+      // Fusionner les options par défaut avec celles fournies
+      const execOptions = { ...defaultOptions, ...options };
+      
       // Parse the code if it's a string, or use it directly if it's already an AST
       let ast;
       if (typeof code === 'string') {
         try {
-          ast = JSON.parse(code);
-        } catch {
-          // If we can't parse as JSON, assume it's already an AST object
-          ast = code;
+          if (execOptions.verbose) {
+            console.log('[NekoInterpreter] Parsing code...');
+          }
+          
+          // Essayer de parser comme JSON d'abord
+          try {
+            ast = JSON.parse(code);
+          } catch {
+            // Si ce n'est pas du JSON, c'est probablement du code nekoScript
+            // Utiliser le parser ici (nécessite l'initialisation du parser)
+            ast = code; // Pour l'instant, on suppose que c'est déjà un AST
+          }
+        } catch (parseError) {
+          throw new Error(`Erreur de parsing: ${parseError.message}`);
         }
       } else {
         ast = code;
       }
-
-      // Evaluate the AST
-      const result = this.evaluate(ast);
+      
+      // Si on veut seulement parser sans exécuter
+      if (execOptions.parseOnly) {
+        return { success: true, ast };
+      }
+      
+      // Définir les variables d'environnement
+      for (const [key, value] of Object.entries(execOptions.envVars)) {
+        process.env[key] = value;
+        
+        // Ajouter aussi à l'environnement nekoScript
+        this.environment.set(key, value);
+      }
+      
+      // Changer le répertoire de travail si nécessaire
+      const originalDir = process.cwd();
+      if (execOptions.workingDir !== originalDir) {
+        process.chdir(execOptions.workingDir);
+      }
+      
+      if (execOptions.verbose) {
+        console.log('[NekoInterpreter] Executing code...');
+      }
+      
+      // Exécution réelle
+      const result = await this.evaluate(ast);
+      
+      // Restaurer le répertoire de travail si nécessaire
+      if (execOptions.workingDir !== originalDir) {
+        process.chdir(originalDir);
+      }
+      
+      if (execOptions.debugInfo) {
+        return {
+          success: true,
+          result: result !== undefined ? String(result) : "Programme exécuté avec succès",
+          environment: Object.fromEntries(this.environment),
+          modules: Array.from(this.modules.keys())
+        };
+      }
       
       return result !== undefined ? String(result) : "Programme exécuté avec succès";
     } catch (error) {
+      if (options.debugInfo) {
+        return {
+          success: false,
+          error: error.message,
+          stack: error.stack
+        };
+      }
       return `Erreur d'exécution: ${error.message}`;
     }
   }
