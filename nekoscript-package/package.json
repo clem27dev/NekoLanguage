@@ -1,0 +1,57 @@
+{
+  "name": "nekoscript",
+  "version": "1.0.0",
+  "description": "Un langage de programmation en français pour créer des sites web, des jeux et des bots Discord",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "bin": {
+    "neko-script": "./bin/neko-script.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "test": "jest",
+    "start": "node ./bin/neko-script.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clem27dev/NekoLanguage.git"
+  },
+  "keywords": [
+    "language",
+    "programming",
+    "french",
+    "neko",
+    "script",
+    "discord",
+    "games",
+    "web"
+  ],
+  "author": "clem27dev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/clem27dev/NekoLanguage/issues"
+  },
+  "homepage": "https://github.com/clem27dev/NekoLanguage#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^9.4.1",
+    "inquirer": "^8.2.5",
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.1",
+    "@types/node": "^18.16.0",
+    "jest": "^29.5.0",
+    "typescript": "^5.0.4"
+  }
+}
