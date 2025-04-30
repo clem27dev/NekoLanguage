@@ -1,0 +1,150 @@
+// Bot Discord interactif en nekoScript
+// Ce bot utilise des réactions et des boutons pour interagir avec les utilisateurs
+
+// Importer le module Discord
+importer Discord;
+
+// Configuration du bot
+nekVariable TOKEN = "VOTRE_TOKEN_DISCORD_ICI";
+nekVariable PREFIX = "!";
+
+// Création du bot avec statut personnalisé
+nekVariable bot = nekCréerBot(TOKEN)
+  .changerStatut("🎮 Interactif | !jeu", "JOUE");
+
+// Variable pour stocker les scores
+nekVariable scores = {};
+
+// Quand le bot est prêt
+bot.surConnexion(function(info) {
+  nekAfficher("Bot interactif connecté sous le nom " + info.tag);
+});
+
+// Fonction pour créer une partie de pierre-papier-ciseaux
+nekFonction creerJeuPPC(message) {
+  // Créer un embed pour le jeu
+  nekVariable embed = bot.créerEmbed(
+    "🎮 Pierre-Papier-Ciseaux",
+    "Choisissez votre coup en cliquant sur une réaction:",
+    "#3498db"
+  )
+  .ajouterChamp("Pierre 🪨", "Bat les ciseaux", true)
+  .ajouterChamp("Papier 📝", "Bat la pierre", true)
+  .ajouterChamp("Ciseaux ✂️", "Bat le papier", true)
+  .définirFooter("Jeu contre " + bot.client.user.username);
+  
+  // Envoyer l'embed et ajouter des réactions
+  message.répondre({ embeds: [embed.embed] }).then(function(msg) {
+    // Ajouter les réactions pour les choix
+    msg.réaction("🪨");  // Pierre
+    msg.réaction("📝");  // Papier
+    msg.réaction("✂️");  // Ciseaux
+    
+    // Créer un collecteur de réactions
+    nekVariable filter = (reaction, user) => {
+      return ["🪨", "📝", "✂️"].includes(reaction.emoji.name) && 
+             user.id === message.auteurId;
+    };
+    
+    // Collecter la réaction de l'utilisateur
+    msg.awaitReactions({ filter, max: 1, time: 30000 })
+      .then(collected => {
+        nekVariable reaction = collected.first();
+        si (reaction === undefined) {
+          message.répondre("Temps écoulé ⏱️");
+          retourner;
+        }
+        
+        // Déterminer le choix de l'utilisateur
+        nekVariable choixUtilisateur = "";
+        si (reaction.emoji.name === "🪨") choixUtilisateur = "pierre";
+        sinon si (reaction.emoji.name === "📝") choixUtilisateur = "papier";
+        sinon si (reaction.emoji.name === "✂️") choixUtilisateur = "ciseaux";
+        
+        // Choix aléatoire du bot
+        nekVariable options = ["pierre", "papier", "ciseaux"];
+        nekVariable choixBot = options[Math.floor(Math.random() * options.length)];
+        
+        // Déterminer le gagnant
+        nekVariable resultat = "";
+        si (choixUtilisateur === choixBot) {
+          resultat = "Égalité! 🤝";
+        } sinon si (
+          (choixUtilisateur === "pierre" && choixBot === "ciseaux") ||
+          (choixUtilisateur === "papier" && choixBot === "pierre") ||
+          (choixUtilisateur === "ciseaux" && choixBot === "papier")
+        ) {
+          resultat = "Vous avez gagné! 🎉";
+          
+          // Mettre à jour le score
+          si (scores[message.auteurId] === undefined) {
+            scores[message.auteurId] = 1;
+          } sinon {
+            scores[message.auteurId] += 1;
+          }
+        } sinon {
+          resultat = "J'ai gagné! 🤖";
+        }
+        
+        // Afficher le résultat
+        nekVariable emojis = {
+          "pierre": "🪨",
+          "papier": "📝",
+          "ciseaux": "✂️"
+        };
+        
+        nekVariable scoreActuel = scores[message.auteurId] || 0;
+        
+        nekVariable embedResultat = bot.créerEmbed(
+          "Résultat du jeu",
+          resultat,
+          "#3498db"
+        )
+        .ajouterChamp("Votre choix", emojis[choixUtilisateur] + " " + choixUtilisateur, true)
+        .ajouterChamp("Mon choix", emojis[choixBot] + " " + choixBot, true)
+        .ajouterChamp("Votre score", scoreActuel + " points", false)
+        .définirFooter("Tapez " + PREFIX + "jeu pour jouer à nouveau");
+        
+        message.répondre({ embeds: [embedResultat.embed] });
+      });
+  });
+}
+
+// Gérer les messages reçus
+bot.surMessage(function(message) {
+  // Ignorer les messages du bot
+  si (message.auteurId === bot.client.user.id) {
+    retourner;
+  }
+  
+  // Commande pour jouer à pierre-papier-ciseaux
+  si (message.contenu === PREFIX + "jeu") {
+    creerJeuPPC(message);
+  }
+  
+  // Commande pour afficher le score
+  si (message.contenu === PREFIX + "score") {
+    nekVariable score = scores[message.auteurId] || 0;
+    message.répondre("🏆 Votre score actuel: " + score + " points");
+  }
+  
+  // Commande d'aide
+  si (message.contenu === PREFIX + "aide") {
+    nekVariable embed = bot.créerEmbed(
+      "Commandes disponibles",
+      "Voici les commandes que vous pouvez utiliser:",
+      "#3498db"
+    )
+    .ajouterChamp(PREFIX + "jeu", "Jouer à Pierre-Papier-Ciseaux", false)
+    .ajouterChamp(PREFIX + "score", "Afficher votre score actuel", false)
+    .ajouterChamp(PREFIX + "aide", "Afficher cette aide", false)
+    .définirFooter("Bot interactif créé avec nekoScript 🐱");
+    
+    message.répondre({ embeds: [embed.embed] });
+  }
+  
+  // Répondre aux messages qui contiennent "bonjour"
+  si (message.contenu.toLowerCase().includes("bonjour")) {
+    message.réaction("👋");
+  }
+});

@@ -1,0 +1,141 @@
+// Bot de sondage Discord en nekoScript
+// Ce bot permet de créer des sondages interactifs avec réactions
+
+// Importer le module Discord
+importer Discord;
+
+// Configuration du bot
+nekVariable TOKEN = "VOTRE_TOKEN_DISCORD_ICI";
+nekVariable PREFIX = "!";
+
+// Création et configuration du bot
+nekVariable bot = nekCréerBot(TOKEN)
+  .changerStatut("Sondages | !sondage", "ACTIVITE_REGARDE");
+
+// Initialisation des emojis pour les options (jusqu'à 10 options)
+nekVariable emojisOptions = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+
+// Quand le bot est prêt
+bot.surConnexion(function(info) {
+  nekAfficher("Bot de sondage connecté sous le nom " + info.tag);
+  nekAfficher("Présent sur " + info.serveurs + " serveurs");
+});
+
+// Fonction pour extraire les options du message
+nekFonction extraireOptions(message) {
+  // Format attendu: !sondage "Question" "Option 1" "Option 2" ...
+  // Rechercher les textes entre guillemets
+  nekVariable regex = /"([^"]*)"/g;
+  nekVariable matches = [];
+  nekVariable match;
+  
+  // Rechercher tous les textes entre guillemets
+  tantque ((match = regex.exec(message)) !== null) {
+    matches.push(match[1]);
+  }
+  
+  // S'il n'y a pas au moins une question et une option
+  si (matches.length < 2) {
+    retourner null;
+  }
+  
+  // Première correspondance = question, le reste = options
+  nekVariable question = matches[0];
+  nekVariable options = matches.slice(1);
+  
+  // Limiter à 10 options maximum
+  si (options.length > 10) {
+    options = options.slice(0, 10);
+  }
+  
+  retourner {
+    question: question,
+    options: options
+  };
+}
+
+// Fonction pour créer un sondage
+nekFonction creerSondage(message, sondageData) {
+  // Créer la description du sondage avec les options numérotées
+  nekVariable description = "Votez en cliquant sur les réactions ci-dessous!\n\n";
+  
+  pour (nekVariable i = 0; i < sondageData.options.length; i++) {
+    description += emojisOptions[i] + " " + sondageData.options[i] + "\n";
+  }
+  
+  // Créer l'embed du sondage
+  nekVariable embed = bot.créerEmbed(
+    "📊 Sondage: " + sondageData.question,
+    description,
+    "#ff9900"
+  )
+  .définirFooter("Sondage créé par " + message.auteur, null)
+  .définirAuteur(bot.client.user.username, bot.client.user.displayAvatarURL());
+  
+  // Envoyer le sondage et ajouter les réactions pour voter
+  message.répondre({ embeds: [embed.embed] }).then(function(msg) {
+    // Ajouter une réaction pour chaque option
+    pour (nekVariable i = 0; i < sondageData.options.length; i++) {
+      setTimeout(function(index) {
+        msg.réaction(emojisOptions[index]);
+      }, i * 500, i);  // Ajouter un délai pour éviter les limitations de l'API
+    }
+  });
+}
+
+// Gérer les messages reçus
+bot.surMessage(function(message) {
+  // Ignorer les messages du bot lui-même
+  si (message.auteurId === bot.client.user.id) {
+    retourner;
+  }
+  
+  // Vérifier si le message commence par le préfixe de commande
+  si (message.contenu.startsWith(PREFIX) === false) {
+    retourner;
+  }
+
+  // Parser la commande
+  nekVariable commande = parseCommandes(PREFIX, message.contenu);
+  
+  // Commande de sondage
+  si (commande.commandName === "sondage") {
+    // Extraire la question et les options du message
+    nekVariable sondageData = extraireOptions(message.contenu);
+    
+    si (sondageData === null) {
+      message.répondre("⚠️ Format incorrect! Utilisez: `" + PREFIX + "sondage \"Question\" \"Option 1\" \"Option 2\" ...`");
+      retourner;
+    }
+    
+    // Créer le sondage
+    creerSondage(message, sondageData);
+  }
+  
+  // Commande d'aide
+  si (commande.commandName === "aide" || commande.commandName === "help") {
+    nekVariable embed = bot.créerEmbed(
+      "Aide - Bot de Sondage",
+      "Voici comment utiliser ce bot:",
+      "#ff9900"
+    )
+    .ajouterChamp(
+      PREFIX + "sondage \"Question\" \"Option 1\" \"Option 2\" ...", 
+      "Crée un sondage avec la question et les options spécifiées (max 10 options)", 
+      false
+    )
+    .ajouterChamp(
+      "Exemple", 
+      PREFIX + "sondage \"Quelle est votre couleur préférée?\" \"Rouge\" \"Bleu\" \"Vert\"", 
+      false
+    )
+    .ajouterChamp(
+      PREFIX + "aide", 
+      "Affiche ce message d'aide", 
+      false
+    )
+    .définirFooter("Bot de sondage créé avec nekoScript 🐱");
+    
+    message.répondre({ embeds: [embed.embed] });
+  }
+});

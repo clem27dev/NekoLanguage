@@ -1,0 +1,46 @@
+// Bot Discord simple en nekoScript
+// Pour exécuter: neko-script exécuter bot-simple.neko
+
+// Importer le module Discord
+importer Discord;
+
+// Configuration du bot
+nekVariable TOKEN = "VOTRE_TOKEN_DISCORD_ICI"; // Remplacer par votre token Discord
+nekVariable PREFIX = "!";  // Préfixe pour les commandes
+
+// Créer le bot
+nekVariable monBot = nekCréerBot(TOKEN);
+
+// Changer le statut du bot
+monBot.changerStatut("Je suis un bot nekoScript", "JOUE");
+
+// Quand le bot est connecté
+monBot.surConnexion(function(info) {
+  nekAfficher("✓ Bot connecté sous le nom: " + info.nom);
+  nekAfficher("✓ Tag complet: " + info.tag);
+  nekAfficher("✓ Le bot est connecté à " + info.serveurs + " serveurs");
+});
+
+// Répondre aux messages
+monBot.surMessage(function(message) {
+  // Afficher chaque message reçu dans la console
+  nekAfficher("Message reçu de " + message.auteur + ": " + message.contenu);
+  
+  // Répondre à la commande !bonjour
+  si (message.contenu === PREFIX + "bonjour") {
+    message.répondre("Bonjour " + message.auteur + " ! 👋");
+  }
+  
+  // Répondre à la commande !aide
+  si (message.contenu === PREFIX + "aide") {
+    message.répondre("Voici les commandes disponibles:\n" +
+                  PREFIX + "bonjour - Je vous dis bonjour\n" +
+                  PREFIX + "aide - Affiche cette aide\n" +
+                  PREFIX + "info - Informations sur le bot");
+  }
+  
+  // Répondre à la commande !info
+  si (message.contenu === PREFIX + "info") {
+    message.répondre("Je suis un bot créé avec nekoScript, un langage de programmation en français ! 🐱");
+  }
+});

@@ -1,6 +1,6 @@
 {
   "name": "neko-script-lang",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Un langage de programmation en français pour créer des sites web, des jeux et des bots Discord",
   "main": "src/index.js",
   "bin": {
