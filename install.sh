@@ -27,7 +27,7 @@ fi
 mkdir -p ~/.nekoscript/bin
 cat > ~/.nekoscript/bin/neko-script << 'EOF'
 #!/usr/bin/env node
-require('../src/cli.js');
+require('../cli.js');
 EOF
 chmod +x ~/.nekoscript/bin/neko-script
 
