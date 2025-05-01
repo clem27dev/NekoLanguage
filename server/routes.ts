@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer } from "ws";
 import { storage } from "./storage";
 import { z } from "zod";
 import { extendedInsertPackageSchema, packageCategorySchema } from "@shared/schema";
-import { nekoInterpreter } from "./interpreter/neko-interpreter";
-import { nekoCommand } from "./interpreter/neko-cli";
+import { nekoInterpreterFixed } from "./interpreter/neko-interpreter-fixed";
+import { nekoCliCommands } from "./interpreter/neko-cli-commands";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API Routes for package registry
@@ -124,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { code } = validationResult.data;
-      const result = await nekoInterpreter.execute(code);
+      const result = await nekoInterpreterFixed.execute(code);
       
       res.json({ result });
     } catch (error: any) {
@@ -152,7 +153,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { command } = validationResult.data;
-      const result = await nekoCommand.execute(command);
+      // Parse command into args array
+      const args = command.trim().split(/\s+/);
+      const result = await nekoCliCommands.executeCommand(args);
       
       res.json({ result });
     } catch (error: any) {
@@ -164,5 +167,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Mise en place du WebSocket pour la communication en temps réel
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  wss.on('connection', (ws) => {
+    console.log('Client WebSocket connecté');
+    
+    // Message de bienvenue
+    ws.send(JSON.stringify({
+      type: 'welcome',
+      message: 'Bienvenue dans le serveur WebSocket nekoScript!'
+    }));
+    
+    // Gérer les messages du client
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        if (data.type === 'execute') {
+          // Exécuter du code nekoScript
+          const result = await nekoInterpreterFixed.execute(data.code);
+          ws.send(JSON.stringify({
+            type: 'result',
+            requestId: data.requestId,
+            result
+          }));
+        } else if (data.type === 'command') {
+          // Exécuter une commande CLI
+          const args = data.command.trim().split(/\s+/);
+          const result = await nekoCliCommands.executeCommand(args);
+          ws.send(JSON.stringify({
+            type: 'commandResult',
+            requestId: data.requestId,
+            result
+          }));
+        }
+      } catch (error: any) {
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: error.message || 'Erreur inconnue'
+        }));
+      }
+    });
+    
+    // Gérer la déconnexion
+    ws.on('close', () => {
+      console.log('Client WebSocket déconnecté');
+    });
+  });
+  
   return httpServer;
 }

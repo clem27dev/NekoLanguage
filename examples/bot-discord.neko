@@ -1,0 +1,71 @@
+// Exemple de bot Discord avec nekoScript
+importer Discord;
+
+// Configuration du bot
+nekVariable TOKEN = "VOTRE_TOKEN_DISCORD_ICI";
+nekVariable PREFIX = "!";
+
+// Créer le bot
+nekVariable monBot = Discord.Bot(TOKEN);
+
+// Configurer le statut du bot
+monBot.changerStatut("commandes " + PREFIX + "aide", "ÉCOUTE");
+
+// Système de commandes
+nekVariable commandes = {};
+
+// Enregistrer les commandes
+commandes["ping"] = function(message, args) {
+  message.répondre("🏓 Pong! Latence: " + (Date.now() - message.date) + "ms");
+};
+
+commandes["salut"] = function(message, args) {
+  nekVariable nom = args.length > 0 ? args[0] : message.auteur.nom;
+  message.répondre("👋 Bonjour " + nom + "!");
+};
+
+commandes["dé"] = function(message, args) {
+  nekVariable max = args.length > 0 ? nekVersNombre(args[0]) : 6;
+  nekVariable résultat = nekAleatoireEntier(1, max);
+  message.répondre("🎲 Vous avez obtenu **" + résultat + "** (sur " + max + ")");
+};
+
+commandes["aide"] = function(message, args) {
+  nekVariable embed = monBot.créerEmbed(
+    "🐱 Aide du Bot",
+    "Voici toutes les commandes disponibles:",
+    "#8c52ff"
+  );
+  
+  embed.ajouterChamp(PREFIX + "ping", "Vérifie la latence du bot", true);
+  embed.ajouterChamp(PREFIX + "salut [nom]", "Dit bonjour", true);
+  embed.ajouterChamp(PREFIX + "dé [max]", "Lance un dé", true);
+  embed.ajouterChamp(PREFIX + "aide", "Affiche cette aide", true);
+  
+  message.répondre({ embeds: [embed.embed] });
+};
+
+// Gestionnaire de messages
+monBot.surMessage(function(message) {
+  // Ignorer les messages du bot
+  si (message.estBot) {
+    retourner;
+  }
+  
+  // Vérifier le préfixe
+  si (!message.contenu.startsWith(PREFIX)) {
+    retourner;
+  }
+  
+  // Extraire les arguments
+  nekVariable args = message.contenu.substring(PREFIX.length).split(" ");
+  nekVariable commandeName = args.shift().toLowerCase();
+  
+  // Exécuter la commande si elle existe
+  si (commandes[commandeName]) {
+    commandes[commandeName](message, args);
+  }
+});
+
+// Démarrer le bot
+monBot.démarrer();

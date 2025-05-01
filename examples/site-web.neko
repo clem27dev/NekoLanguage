@@ -1,0 +1,94 @@
+// Exemple d'application web avec nekoScript
+importer Web;
+
+// Créer une application Express
+nekVariable app = Web.Express();
+nekVariable PORT = 3000;
+
+// Configurer le dossier public
+app.utiliser(Web.Static("public"));
+
+// Page d'accueil
+app.route("GET", "/", function(req, res) {
+  res.envoyer(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Site nekoScript</title>
+        <style>
+          body { font-family: Arial; margin: 0; padding: 0; }
+          header { background: #8c52ff; color: white; padding: 20px; }
+          main { padding: 20px; max-width: 800px; margin: 0 auto; }
+          .card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+        </style>
+      </head>
+      <body>
+        <header>
+          <h1>🐱 Site créé avec nekoScript</h1>
+        </header>
+        <main>
+          <h2>Bienvenue sur mon site!</h2>
+          <p>Ce site a été créé avec nekoScript, un langage de programmation en français.</p>
+          
+          <div class="card">
+            <h3>Fonctionnalités de nekoScript</h3>
+            <ul>
+              <li>Syntaxe en français</li>
+              <li>Création de sites web</li>
+              <li>Programmation de bots Discord</li>
+              <li>Développement de jeux</li>
+            </ul>
+          </div>
+          
+          <div class="card">
+            <h3>Liens</h3>
+            <p><a href="/a-propos">À propos</a></p>
+            <p><a href="/api/info">API (JSON)</a></p>
+          </div>
+        </main>
+      </body>
+    </html>
+  `);
+});
+
+// Page à propos
+app.route("GET", "/a-propos", function(req, res) {
+  res.envoyer(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>À propos - Site nekoScript</title>
+        <style>
+          body { font-family: Arial; margin: 0; padding: 0; }
+          header { background: #8c52ff; color: white; padding: 20px; }
+          main { padding: 20px; max-width: 800px; margin: 0 auto; }
+        </style>
+      </head>
+      <body>
+        <header>
+          <h1>🐱 À propos de nekoScript</h1>
+        </header>
+        <main>
+          <h2>Qu'est-ce que nekoScript?</h2>
+          <p>nekoScript est un langage de programmation en français conçu pour faciliter l'apprentissage de la programmation.</p>
+          <p><a href="/">Retour à l'accueil</a></p>
+        </main>
+      </body>
+    </html>
+  `);
+});
+
+// API endpoint
+app.route("GET", "/api/info", function(req, res) {
+  res.json({
+    nom: "nekoScript",
+    version: "1.0.0",
+    auteur: "Équipe nekoScript",
+    description: "Un langage de programmation en français"
+  });
+});
+
+// Démarrer le serveur
+app.écouter(PORT, function() {
+  nekAfficher("Serveur démarré sur http://localhost:" + PORT);
+});
