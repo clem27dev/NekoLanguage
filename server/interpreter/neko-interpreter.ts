@@ -10,13 +10,83 @@ export class NekoInterpreter {
   private modules: Map<string, any> = new Map();
 
   constructor() {
-    // Initialize built-in functions
+    this.initializeStandardLibrary();
+  }
+  
+  // Initialize all standard library functions
+  private initializeStandardLibrary() {
+    // Core functions
     this.environment.set('nekAfficher', (...args: any[]) => {
-      return args.join(' ');
+      const message = args.join(' ');
+      console.log(message);
+      return message;
     });
     
     this.environment.set('nekBouger', (x: number, y: number) => {
       return `Déplacement de (${x}, ${y})`;
+    });
+    
+    this.environment.set('nekLire', (prompt: string) => {
+      return prompt; // In a real environment, this would read user input
+    });
+    
+    this.environment.set('nekDormir', (ms: number) => {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    });
+    
+    // Math functions
+    const mathModule = new Map<string, any>();
+    mathModule.set('nekSin', Math.sin);
+    mathModule.set('nekCos', Math.cos);
+    mathModule.set('nekTan', Math.tan);
+    mathModule.set('nekPow', Math.pow);
+    mathModule.set('nekSqrt', Math.sqrt);
+    mathModule.set('nekAbs', Math.abs);
+    mathModule.set('nekAleatoire', Math.random);
+    mathModule.set('nekAleatoireEntier', (min: number, max: number) => {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    });
+    mathModule.set('nekRadians', (degrees: number) => degrees * Math.PI / 180);
+    mathModule.set('PI', Math.PI);
+    mathModule.set('E', Math.E);
+    
+    this.modules.set('Math', mathModule);
+    
+    // Base module with common utilities
+    const baseModule = new Map<string, any>();
+    baseModule.set('nekCreerTableau', (...items: any[]) => items);
+    baseModule.set('nekAjouterElement', (array: any[], item: any) => array.push(item));
+    baseModule.set('nekObtenirElement', (array: any[], index: number) => array[index]);
+    baseModule.set('nekLongueur', (obj: any) => {
+      if (typeof obj === 'string') return obj.length;
+      if (Array.isArray(obj)) return obj.length;
+      return 0;
+    });
+    baseModule.set('nekSousChaîne', (str: string, debut: number, fin: number) => str.substring(debut, fin));
+    baseModule.set('nekVersNombre', (str: string) => parseFloat(str));
+    baseModule.set('nekVersTexte', (val: any) => String(val));
+    baseModule.set('nekDate', () => new Date().toLocaleString());
+    
+    this.modules.set('Base', baseModule);
+    
+    // Add base functions to global environment for easy access
+    baseModule.forEach((value, key) => {
+      this.environment.set(key, value);
+    });
+    
+    // Add math functions to global environment
+    mathModule.forEach((value, key) => {
+      this.environment.set(key, value);
+    });
+    
+    // Handle direct JavaScript execution for compatibility
+    this.environment.set('nekJavaScript', (code: string) => {
+      try {
+        // Execute JavaScript directly for full compatibility
+        return eval(code);
+      } catch (error: any) {
+        return `Erreur JavaScript: ${error.message}`;
+      }
     });
   }
 
@@ -30,6 +100,23 @@ export class NekoInterpreter {
   }
 
   private evaluate(node: NekoAST): any {
+    // Check if the code is pure JavaScript
+    if (node.type === 'Program' && node.body.length === 1 && 
+        node.body[0].type === 'ExpressionStatement' && 
+        node.body[0].expression && 
+        node.body[0].expression.type === 'StringLiteral' && 
+        node.body[0].expression.value.trim().startsWith('// JavaScript mode')) {
+      // Extract JavaScript code
+      const jsCode = node.body[0].expression.value;
+      try {
+        // Execute JavaScript directly for backward compatibility
+        return eval(jsCode);
+      } catch (error: any) {
+        return `Erreur JavaScript: ${error.message}`;
+      }
+    }
+    
+    // Normal nekoScript evaluation
     switch (node.type) {
       case 'Program':
         return this.evaluateProgram(node);
@@ -48,6 +135,9 @@ export class NekoInterpreter {
       
       case 'ImportStatement':
         return this.evaluateImportStatement(node);
+      
+      case 'ReturnStatement':
+        return this.evaluateReturnStatement(node);
       
       case 'ExpressionStatement':
         return this.evaluate(node.expression);
@@ -155,11 +245,11 @@ export class NekoInterpreter {
     }
     
     // Collect exported values
-    for (const [key, value] of this.environment.entries()) {
+    this.environment.forEach((value, key) => {
       if (key !== 'nekAfficher' && key !== 'nekBouger') {
         module[key] = value;
       }
-    }
+    });
     
     // Restore previous scope
     this.environment = previousEnv;
@@ -177,9 +267,39 @@ export class NekoInterpreter {
             const bot = {
               surMessage: (fn: Function) => {
                 // Simulate bot functionality
+                console.log("Gestionnaire de message Discord configuré");
                 return "Bot Discord configuré avec gestionnaire de messages";
               },
-              démarrer: () => "Bot Discord démarré"
+              surReaction: (fn: Function) => {
+                console.log("Gestionnaire de réaction Discord configuré");
+                return "Bot Discord configuré avec gestionnaire de réactions";
+              },
+              surCommande: (commande: string, fn: Function) => {
+                console.log(`Commande Discord '${commande}' configurée`);
+                return `Bot Discord configuré avec la commande '${commande}'`;
+              },
+              changerStatut: (message: string, type: string = "JOUE") => {
+                console.log(`Statut Discord changé: ${type} ${message}`);
+                return `Statut Discord du bot changé: ${type} ${message}`;
+              },
+              créerEmbed: (titre: string, description: string, couleur: string = "#5865F2") => {
+                console.log(`Création d'un embed Discord: ${titre}`);
+                return {
+                  embed: {
+                    title: titre,
+                    description: description,
+                    color: couleur
+                  },
+                  ajouterChamp: (nom: string, valeur: string, inline: boolean = false) => {
+                    console.log(`Champ ajouté à l'embed: ${nom}`);
+                    return "Champ ajouté à l'embed";
+                  }
+                };
+              },
+              démarrer: () => {
+                console.log("Bot Discord démarré");
+                return "Bot Discord démarré";
+              }
             };
             return bot;
           }
@@ -213,6 +333,11 @@ export class NekoInterpreter {
     }
   }
 
+  private evaluateReturnStatement(node: NekoAST): any {
+    const value = this.evaluate(node.value);
+    return { __isReturn: true, value };
+  }
+  
   private evaluateCallExpression(node: NekoAST): any {
     // Handle method calls (e.g., obj.method())
     if (node.callee.includes('.')) {
@@ -236,7 +361,7 @@ export class NekoInterpreter {
         throw new Error(`Méthode non définie: ${parts[parts.length - 1]}`);
       }
       
-      const args = node.arguments.map(arg => this.evaluate(arg));
+      const args = node.arguments.map((arg: NekoAST) => this.evaluate(arg));
       return method.apply(object, args);
     }
     
@@ -247,7 +372,7 @@ export class NekoInterpreter {
       throw new Error(`Fonction non définie: ${node.callee}`);
     }
     
-    const args = node.arguments.map(arg => this.evaluate(arg));
+    const args = node.arguments.map((arg: NekoAST) => this.evaluate(arg));
     return fn(...args);
   }
 }

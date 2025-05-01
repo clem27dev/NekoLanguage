@@ -45,13 +45,12 @@ export class NekoParser {
   private tokenize(code: string): void {
     this.tokens = [];
     
-    // Simple tokenizer for demonstration
-    // In a real implementation, this would be more sophisticated
+    // Enhanced tokenizer with support for more nekoScript syntax
     
     const keywords = [
       'nekVariable', 'nekFonction', 'nekSi', 'nekSinon', 'nekPour', 
       'nekTantQue', 'nekRetourner', 'nekImporter', 'nekModule', 'nekNouveau',
-      'nekDepuis'
+      'nekDepuis', 'importer', 'si', 'sinon', 'retourner', 'pour', 'tantque'
     ];
     
     let current = 0;
@@ -163,11 +162,16 @@ export class NekoParser {
           case 'nekFonction':
             return this.parseFunctionDeclaration();
           case 'nekSi':
+          case 'si':
             return this.parseIfStatement();
           case 'nekModule':
             return this.parseModuleDeclaration();
           case 'nekImporter':
+          case 'importer':
             return this.parseImportStatement();
+          case 'retourner':
+          case 'nekRetourner':
+            return this.parseReturnStatement();
           default:
             this.advance(); // Skip unknown keyword
             return {
@@ -241,7 +245,9 @@ export class NekoParser {
   }
 
   private parseIfStatement(): NekoAST {
-    this.consume('keyword', 'nekSi');
+    const keyword = this.peek().value;
+    this.advance(); // Skip 'nekSi' or 'si'
+    
     this.consume('operator', '(');
     const condition = this.parseExpression();
     this.consume('operator', ')');
@@ -257,8 +263,8 @@ export class NekoParser {
     
     let elseBranch = null;
     
-    if (this.peek().value === 'nekSinon') {
-      this.advance(); // Skip 'nekSinon'
+    if (this.peek().value === 'nekSinon' || this.peek().value === 'sinon') {
+      this.advance(); // Skip 'nekSinon' or 'sinon'
       
       this.consume('operator', '{');
       elseBranch = [];
@@ -299,22 +305,49 @@ export class NekoParser {
   }
 
   private parseImportStatement(): NekoAST {
-    this.consume('keyword', 'nekImporter');
-    const name = this.consume('identifier', 'Expected import name').value;
+    const keyword = this.peek().value;
+    this.advance(); // Skip 'nekImporter' or 'importer'
     
-    let source = null;
-    
-    if (this.peek().value === 'nekDepuis') {
-      this.advance(); // Skip 'nekDepuis'
-      source = this.consume('string', 'Expected import source').value;
+    // Handle different import syntax styles
+    if (keyword === 'importer') {
+      const name = this.consume('identifier', 'Expected import name').value;
+      this.consume('operator', ';');
+      
+      return {
+        type: 'ImportStatement',
+        name,
+        source: null
+      };
+    } else {
+      const name = this.consume('identifier', 'Expected import name').value;
+      
+      let source = null;
+      
+      if (this.peek().value === 'nekDepuis') {
+        this.advance(); // Skip 'nekDepuis'
+        source = this.consume('string', 'Expected import source').value;
+      }
+      
+      this.consume('operator', ';');
+      
+      return {
+        type: 'ImportStatement',
+        name,
+        source
+      };
     }
+  }
+  
+  private parseReturnStatement(): NekoAST {
+    const keyword = this.peek().value;
+    this.advance(); // Skip 'retourner' or 'nekRetourner'
     
+    const value = this.parseExpression();
     this.consume('operator', ';');
     
     return {
-      type: 'ImportStatement',
-      name,
-      source
+      type: 'ReturnStatement',
+      value
     };
   }
 
