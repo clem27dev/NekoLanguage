@@ -186,18 +186,29 @@ class NekoInterpreter {
       
       let result;
       
+      // Convertir la condition en valeur booléenne explicite
+      const conditionBool = Boolean(condition);
+      
       // Exécuter le bloc if si la condition est vraie
-      if (condition) {
+      if (conditionBool) {
         console.log("[NekoScript] Exécution du bloc 'if'");
-        for (const statement of node.body) {
-          result = this.evaluate(statement);
+        if (Array.isArray(node.body)) {
+          for (const statement of node.body) {
+            result = this.evaluate(statement);
+          }
+        } else if (node.body) {
+          result = this.evaluate(node.body);
         }
       } 
       // Sinon, exécuter le bloc else si disponible
-      else if (node.elseBody && node.elseBody.length > 0) {
+      else if (node.elseBody) {
         console.log("[NekoScript] Exécution du bloc 'else'");
-        for (const statement of node.elseBody) {
-          result = this.evaluate(statement);
+        if (Array.isArray(node.elseBody)) {
+          for (const statement of node.elseBody) {
+            result = this.evaluate(statement);
+          }
+        } else {
+          result = this.evaluate(node.elseBody);
         }
       } else {
         console.log("[NekoScript] Pas de bloc 'else', condition non satisfaite");
@@ -206,6 +217,7 @@ class NekoInterpreter {
       return result;
     } catch (error) {
       console.error(`[NekoScript] Erreur dans l'évaluation d'une condition: ${error.message}`);
+      console.error(`[NekoScript] Détails du nœud: ${JSON.stringify(node, null, 2)}`);
       throw error;
     }
   }

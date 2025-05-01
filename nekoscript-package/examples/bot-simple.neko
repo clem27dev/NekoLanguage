@@ -4,6 +4,9 @@
 // Importer le module Discord
 importer Discord;
 
+// Importer le module Base pour les fonctions essentielles
+importer Base;
+
 // Configuration du bot
 nekVariable TOKEN = "VOTRE_TOKEN_DISCORD_ICI"; // Remplacer par votre token Discord
 nekVariable PREFIX = "!";  // Préfixe pour les commandes
@@ -26,21 +29,24 @@ monBot.surMessage(function(message) {
   // Afficher chaque message reçu dans la console
   nekAfficher("Message reçu de " + message.auteur + ": " + message.contenu);
   
-  // Répondre à la commande !bonjour
-  si (message.contenu === PREFIX + "bonjour") {
-    message.répondre("Bonjour " + message.auteur + " ! 👋");
-  }
+  // Vérifier les commandes avec les fonctions de base
+  nekVariable commande = message.contenu;
   
-  // Répondre à la commande !aide
-  si (message.contenu === PREFIX + "aide") {
+  // Commande !bonjour
+  si(commence_par(commande, PREFIX + "bonjour"), function() {
+    message.répondre("Bonjour " + message.auteur + " ! 👋");
+  });
+  
+  // Commande !aide
+  si(commence_par(commande, PREFIX + "aide"), function() {
     message.répondre("Voici les commandes disponibles:\n" +
                   PREFIX + "bonjour - Je vous dis bonjour\n" +
                   PREFIX + "aide - Affiche cette aide\n" +
                   PREFIX + "info - Informations sur le bot");
-  }
+  });
   
-  // Répondre à la commande !info
-  si (message.contenu === PREFIX + "info") {
+  // Commande !info
+  si(commence_par(commande, PREFIX + "info"), function() {
     message.répondre("Je suis un bot créé avec nekoScript, un langage de programmation en français ! 🐱");
-  }
+  });
 });
