@@ -1,0 +1,347 @@
+// Site web simple en nekoScript
+// Version minimaliste et robuste
+
+// Utiliser Express pour créer un serveur web
+nekVariable express = require("express");
+nekVariable app = express();
+nekVariable PORT = process.env.PORT || 3000;
+
+// Middleware pour analyser les données du formulaire
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// Middleware pour servir les fichiers statiques
+app.use(express.static("public"));
+
+// Données du site
+nekVariable visiteurs = 0;
+nekVariable messages = [];
+
+// Route principale - page d'accueil
+app.get("/", (req, res) => {
+  visiteurs++;
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Site nekoScript</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          line-height: 1.6;
+        }
+        header {
+          background-color: #8c52ff;
+          color: white;
+          padding: 20px;
+          text-align: center;
+          border-radius: 5px;
+          margin-bottom: 20px;
+        }
+        nav {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        nav a {
+          color: #8c52ff;
+          text-decoration: none;
+          font-weight: bold;
+        }
+        main {
+          background-color: #f9f9f9;
+          padding: 20px;
+          border-radius: 5px;
+        }
+        footer {
+          text-align: center;
+          margin-top: 20px;
+          color: #666;
+          font-size: 0.8em;
+        }
+        .counter {
+          text-align: center;
+          font-size: 0.9em;
+          color: #666;
+        }
+      </style>
+    </head>
+    <body>
+      <header>
+        <h1>🐱 Site nekoScript</h1>
+        <p>Un site web créé avec nekoScript</p>
+      </header>
+      
+      <nav>
+        <a href="/">Accueil</a>
+        <a href="/a-propos">À propos</a>
+        <a href="/contact">Contact</a>
+      </nav>
+      
+      <main>
+        <h2>Bienvenue sur mon site!</h2>
+        <p>Ceci est un exemple de site web créé avec nekoScript, un langage de programmation en français.</p>
+        <p>Ce site est simple mais fonctionnel. Il démontre comment créer un site web avec nekoScript.</p>
+        
+        <div class="counter">
+          Ce site a été visité ${visiteurs} fois.
+        </div>
+      </main>
+      
+      <footer>
+        &copy; ${new Date().getFullYear()} Site nekoScript - Créé avec nekoScript
+      </footer>
+    </body>
+    </html>
+  `);
+});
+
+// Route À propos
+app.get("/a-propos", (req, res) => {
+  visiteurs++;
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>À propos - Site nekoScript</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          line-height: 1.6;
+        }
+        header {
+          background-color: #8c52ff;
+          color: white;
+          padding: 20px;
+          text-align: center;
+          border-radius: 5px;
+          margin-bottom: 20px;
+        }
+        nav {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        nav a {
+          color: #8c52ff;
+          text-decoration: none;
+          font-weight: bold;
+        }
+        main {
+          background-color: #f9f9f9;
+          padding: 20px;
+          border-radius: 5px;
+        }
+        footer {
+          text-align: center;
+          margin-top: 20px;
+          color: #666;
+          font-size: 0.8em;
+        }
+      </style>
+    </head>
+    <body>
+      <header>
+        <h1>🐱 À propos</h1>
+        <p>Découvrez nekoScript</p>
+      </header>
+      
+      <nav>
+        <a href="/">Accueil</a>
+        <a href="/a-propos">À propos</a>
+        <a href="/contact">Contact</a>
+      </nav>
+      
+      <main>
+        <h2>À propos de nekoScript</h2>
+        <p>nekoScript est un langage de programmation conçu pour être simple et accessible aux francophones. Il permet de créer des applications web, des jeux et des bots Discord.</p>
+        
+        <h3>Caractéristiques :</h3>
+        <ul>
+          <li>Syntaxe en français pour plus d'accessibilité</li>
+          <li>Support pour le développement web, jeux et bots Discord</li>
+          <li>Fonctions intuitives et faciles à apprendre</li>
+          <li>Excellente intégration avec les technologies existantes</li>
+        </ul>
+      </main>
+      
+      <footer>
+        &copy; ${new Date().getFullYear()} Site nekoScript - Créé avec nekoScript
+      </footer>
+    </body>
+    </html>
+  `);
+});
+
+// Route Contact
+app.get("/contact", (req, res) => {
+  visiteurs++;
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Contact - Site nekoScript</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          line-height: 1.6;
+        }
+        header {
+          background-color: #8c52ff;
+          color: white;
+          padding: 20px;
+          text-align: center;
+          border-radius: 5px;
+          margin-bottom: 20px;
+        }
+        nav {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        nav a {
+          color: #8c52ff;
+          text-decoration: none;
+          font-weight: bold;
+        }
+        main {
+          background-color: #f9f9f9;
+          padding: 20px;
+          border-radius: 5px;
+        }
+        footer {
+          text-align: center;
+          margin-top: 20px;
+          color: #666;
+          font-size: 0.8em;
+        }
+        form {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        label {
+          font-weight: bold;
+        }
+        input, textarea {
+          padding: 8px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+        }
+        button {
+          background-color: #8c52ff;
+          color: white;
+          border: none;
+          padding: 10px;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+        .messages {
+          margin-top: 20px;
+          padding: 10px;
+          background-color: #f0f0f0;
+          border-radius: 4px;
+        }
+        .message {
+          padding: 10px;
+          margin-bottom: 10px;
+          background-color: white;
+          border-radius: 4px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .message h4 {
+          margin: 0 0 5px 0;
+          color: #8c52ff;
+        }
+      </style>
+    </head>
+    <body>
+      <header>
+        <h1>🐱 Contact</h1>
+        <p>Laissez-nous un message</p>
+      </header>
+      
+      <nav>
+        <a href="/">Accueil</a>
+        <a href="/a-propos">À propos</a>
+        <a href="/contact">Contact</a>
+      </nav>
+      
+      <main>
+        <h2>Contactez-nous</h2>
+        <p>Utilisez ce formulaire pour nous laisser un message.</p>
+        
+        <form action="/contact" method="post">
+          <div>
+            <label for="nom">Nom :</label>
+            <input type="text" id="nom" name="nom" required>
+          </div>
+          <div>
+            <label for="email">Email :</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div>
+            <label for="message">Message :</label>
+            <textarea id="message" name="message" rows="5" required></textarea>
+          </div>
+          <button type="submit">Envoyer</button>
+        </form>
+        
+        <div class="messages">
+          <h3>Messages reçus (${messages.length})</h3>
+          ${messages.map(msg => `
+            <div class="message">
+              <h4>${msg.nom}</h4>
+              <p>${msg.message}</p>
+              <small>${msg.email} - ${msg.date}</small>
+            </div>
+          `).join('')}
+        </div>
+      </main>
+      
+      <footer>
+        &copy; ${new Date().getFullYear()} Site nekoScript - Créé avec nekoScript
+      </footer>
+    </body>
+    </html>
+  `);
+});
+
+// Traiter le formulaire de contact
+app.post("/contact", (req, res) => {
+  nekVariable { nom, email, message } = req.body;
+  
+  // Ajouter le message à la liste
+  messages.push({
+    nom,
+    email,
+    message,
+    date: new Date().toLocaleString()
+  });
+  
+  // Rediriger vers la page de contact
+  res.redirect("/contact");
+});
+
+// Démarrer le serveur
+app.listen(PORT, () => {
+  console.log(`Serveur nekoScript en cours d'exécution sur http://localhost:${PORT}`);
+});

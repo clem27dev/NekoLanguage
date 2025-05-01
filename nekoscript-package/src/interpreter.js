@@ -24,10 +24,37 @@ class NekoInterpreter {
         workingDir: process.cwd(), // Répertoire de travail
         parseOnly: false,        // Uniquement analyser sans exécuter
         debugInfo: false,        // Afficher des infos de débogage supplémentaires
+        rawJavaScript: false,    // Le code est-il du JavaScript pur?
       };
       
       // Fusionner les options par défaut avec celles fournies
       const execOptions = { ...defaultOptions, ...options };
+      
+      // Si le code est du JavaScript pur, l'exécuter directement
+      if (execOptions.rawJavaScript && typeof code === 'string') {
+        try {
+          if (execOptions.verbose) {
+            console.log('[NekoInterpreter] Exécution de JavaScript pur...');
+          }
+          
+          // Exécuter le code JavaScript directement en utilisant Function pour éviter eval
+          const func = new Function('require', 'console', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'process', code);
+          const result = func(require, console, setTimeout, clearTimeout, setInterval, clearInterval, process);
+          
+          if (execOptions.debugInfo) {
+            return {
+              success: true,
+              result: result !== undefined ? String(result) : "Code JavaScript exécuté avec succès",
+              environment: Object.fromEntries(this.environment)
+            };
+          }
+          
+          return result;
+        } catch (jsError) {
+          console.error(`[NekoInterpreter] Erreur d'exécution JavaScript: ${jsError.message}`);
+          throw jsError;
+        }
+      }
       
       // Parse the code if it's a string, or use it directly if it's already an AST
       let ast;
@@ -37,15 +64,40 @@ class NekoInterpreter {
             console.log('[NekoInterpreter] Parsing code...');
           }
           
+          // Détecter si c'est du JavaScript
+          if (code.includes('require(') || code.includes('function(') || 
+              code.includes('const ') || code.includes('let ') ||
+              code.includes('var ') || code.includes('if (') ||
+              code.includes('for (') || code.includes('while (')) {
+            
+            if (execOptions.verbose) {
+              console.log('[NekoInterpreter] Le code ressemble à du JavaScript. Exécution directe...');
+            }
+            
+            return await this.execute(code, { ...options, rawJavaScript: true });
+          }
+          
           // Essayer de parser comme JSON d'abord
           try {
             ast = JSON.parse(code);
           } catch {
             // Si ce n'est pas du JSON, c'est probablement du code nekoScript
-            // Utiliser le parser ici (nécessite l'initialisation du parser)
-            ast = code; // Pour l'instant, on suppose que c'est déjà un AST
+            // Utiliser le parser ici avec un fallback minimal
+            ast = {
+              type: 'Program',
+              body: [
+                {
+                  type: 'ExpressionStatement',
+                  expression: {
+                    type: 'Expression',
+                    value: code
+                  }
+                }
+              ]
+            };
           }
         } catch (parseError) {
+          console.error(`[NekoInterpreter] Erreur de parsing: ${parseError.message}`);
           throw new Error(`Erreur de parsing: ${parseError.message}`);
         }
       } else {

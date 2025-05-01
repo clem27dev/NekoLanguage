@@ -1,0 +1,50 @@
+// Bot Discord minimal en nekoScript - version ultra simplifiée
+// Ce code est conçu pour fonctionner même avec un interpréteur limité
+
+// Configuration
+nekVariable token = "VOTRE_TOKEN_DISCORD_ICI";
+nekVariable prefix = "!";
+
+// Créer un client Discord
+nekVariable Discord = require("discord.js");
+nekVariable client = new Discord.Client({
+  intents: [
+    "Guilds",
+    "GuildMessages", 
+    "MessageContent",
+    "GuildMembers"
+  ]
+});
+
+// Événement: quand le bot est prêt
+client.once("ready", () => {
+  console.log("Bot nekoScript prêt!");
+  client.user.setActivity(prefix + "aide", { type: "PLAYING" });
+});
+
+// Événement: quand un message est reçu
+client.on("messageCreate", (message) => {
+  // Ignorer les messages des bots
+  if (message.author.bot) return;
+  
+  // Afficher le message reçu
+  console.log(`Message de ${message.author.username}: ${message.content}`);
+  
+  // Commande !ping
+  if (message.content === prefix + "ping") {
+    message.reply("Pong!");
+  }
+  
+  // Commande !aide
+  if (message.content === prefix + "aide") {
+    message.reply("Commandes disponibles: !ping, !aide, !bonjour");
+  }
+  
+  // Commande !bonjour
+  if (message.content === prefix + "bonjour") {
+    message.reply("Bonjour " + message.author.username + " ! 👋");
+  }
+});
+
+// Connexion à Discord
+client.login(token);

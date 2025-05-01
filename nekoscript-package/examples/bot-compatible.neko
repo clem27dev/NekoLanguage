@@ -1,0 +1,119 @@
+// Bot Discord 100% compatible avec l'interpréteur nekoScript
+// Ce fichier utilise uniquement JavaScript standard pour une compatibilité maximale
+
+// Importer les modules nécessaires
+const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
+
+// Configuration du bot
+const token = "VOTRE_TOKEN_DISCORD_ICI"; // À remplacer par votre token
+const prefix = "!";
+
+// Créer le client Discord avec les intents nécessaires
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
+  ]
+});
+
+// Événement: quand le bot est prêt
+client.once("ready", () => {
+  console.log(`Bot connecté sous le nom ${client.user.tag} !`);
+  console.log(`Présent sur ${client.guilds.cache.size} serveurs`);
+  
+  // Définir le statut du bot
+  client.user.setActivity(`${prefix}aide`, { type: 0 }); // 0 = Playing
+});
+
+// Événement: quand un message est reçu
+client.on("messageCreate", async (message) => {
+  // Ignorer les messages provenant d'autres bots
+  if (message.author.bot) return;
+  
+  // Afficher les messages reçus dans la console
+  console.log(`Message de ${message.author.username}: ${message.content}`);
+  
+  // Réagir au mot "bonjour"
+  if (message.content.toLowerCase().includes("bonjour")) {
+    try {
+      await message.react("👋");
+    } catch (error) {
+      console.error("Erreur lors de l'ajout de la réaction:", error);
+    }
+  }
+  
+  // Vérifier si le message commence par le préfixe
+  if (!message.content.startsWith(prefix)) return;
+  
+  // Séparer la commande et les arguments
+  const args = message.content.slice(prefix.length).trim().split(/ +/);
+  const commande = args.shift().toLowerCase();
+  
+  // Commande: ping
+  if (commande === "ping") {
+    const latence = Date.now() - message.createdTimestamp;
+    message.reply(`Pong! Latence: ${latence}ms`);
+  }
+  
+  // Commande: aide
+  else if (commande === "aide" || commande === "help") {
+    const embed = new EmbedBuilder()
+      .setColor("#8c52ff")
+      .setTitle("🐱 Aide du Bot")
+      .setDescription("Voici les commandes disponibles:")
+      .addFields(
+        { name: `${prefix}ping`, value: "Vérifie la latence du bot", inline: true },
+        { name: `${prefix}aide`, value: "Affiche cette aide", inline: true },
+        { name: `${prefix}info`, value: "Affiche des informations sur le bot", inline: true },
+        { name: `${prefix}avatar`, value: "Affiche ton avatar", inline: true },
+        { name: `${prefix}dé`, value: "Lance un dé à 6 faces", inline: true }
+      )
+      .setFooter({ text: "Bot créé avec nekoScript" })
+      .setTimestamp();
+    
+    message.reply({ embeds: [embed] });
+  }
+  
+  // Commande: info
+  else if (commande === "info") {
+    const embed = new EmbedBuilder()
+      .setColor("#8c52ff")
+      .setTitle("🐱 Informations")
+      .setDescription("Je suis un bot Discord créé avec nekoScript, un langage de programmation en français !")
+      .addFields(
+        { name: "Version", value: "1.0.0", inline: true },
+        { name: "Développé avec", value: "nekoScript", inline: true },
+        { name: "Créateur", value: "Un utilisateur de nekoScript", inline: true }
+      )
+      .setTimestamp();
+    
+    message.reply({ embeds: [embed] });
+  }
+  
+  // Commande: avatar
+  else if (commande === "avatar") {
+    const utilisateur = message.mentions.users.first() || message.author;
+    const embed = new EmbedBuilder()
+      .setColor("#8c52ff")
+      .setTitle(`Avatar de ${utilisateur.username}`)
+      .setImage(utilisateur.displayAvatarURL({ dynamic: true, size: 256 }));
+    
+    message.reply({ embeds: [embed] });
+  }
+  
+  // Commande: dé
+  else if (commande === "dé" || commande === "dice") {
+    const resultat = Math.floor(Math.random() * 6) + 1;
+    message.reply(`🎲 Tu as obtenu un **${resultat}** !`);
+  }
+});
+
+// Connecter le bot à Discord
+client.login(token)
+  .then(() => console.log("Bot connecté avec succès !"))
+  .catch(error => {
+    console.error("Erreur de connexion:", error);
+    console.error("Vérifiez que votre token est correct.");
+  });

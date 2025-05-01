@@ -1,0 +1,149 @@
+// Jeu simple en nekoScript
+// Ce code est conçu pour être minimal et robuste
+
+// Utiliser la bibliothèque de jeu standard
+nekVariable Phaser = require("phaser");
+
+// Configuration du jeu
+nekVariable config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: { y: 300 },
+      debug: false
+    }
+  },
+  scene: {
+    preload: preload,
+    create: create,
+    update: update
+  }
+};
+
+// Variables globales du jeu
+nekVariable joueur;
+nekVariable etoiles;
+nekVariable plateformes;
+nekVariable score = 0;
+nekVariable scoreText;
+nekVariable curseurs;
+
+// Créer le jeu
+nekVariable jeu = new Phaser.Game(config);
+
+// Précharger les assets
+function preload() {
+  this.load.image("ciel", "https://examples.phaser.io/assets/skies/space3.png");
+  this.load.image("sol", "https://examples.phaser.io/assets/sprites/platform.png");
+  this.load.image("etoile", "https://examples.phaser.io/assets/sprites/star.png");
+  this.load.spritesheet("personnage",
+    "https://examples.phaser.io/assets/sprites/dude.png",
+    { frameWidth: 32, frameHeight: 48 }
+  );
+}
+
+// Créer les éléments du jeu
+function create() {
+  // Arrière-plan
+  this.add.image(400, 300, "ciel");
+  
+  // Plateformes
+  plateformes = this.physics.add.staticGroup();
+  plateformes.create(400, 568, "sol").setScale(2).refreshBody();
+  plateformes.create(600, 400, "sol");
+  plateformes.create(50, 250, "sol");
+  plateformes.create(750, 220, "sol");
+  
+  // Joueur
+  joueur = this.physics.add.sprite(100, 450, "personnage");
+  joueur.setBounce(0.2);
+  joueur.setCollideWorldBounds(true);
+  
+  // Animations du joueur
+  this.anims.create({
+    key: "gauche",
+    frames: this.anims.generateFrameNumbers("personnage", { start: 0, end: 3 }),
+    frameRate: 10,
+    repeat: -1
+  });
+  
+  this.anims.create({
+    key: "face",
+    frames: [{ key: "personnage", frame: 4 }],
+    frameRate: 20
+  });
+  
+  this.anims.create({
+    key: "droite",
+    frames: this.anims.generateFrameNumbers("personnage", { start: 5, end: 8 }),
+    frameRate: 10,
+    repeat: -1
+  });
+  
+  // Contrôles du joueur
+  curseurs = this.input.keyboard.createCursorKeys();
+  
+  // Étoiles
+  etoiles = this.physics.add.group({
+    key: "etoile",
+    repeat: 11,
+    setXY: { x: 12, y: 0, stepX: 70 }
+  });
+  
+  etoiles.children.iterate(function(enfant) {
+    enfant.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+  });
+  
+  // Score
+  scoreText = this.add.text(16, 16, "Score: 0", {
+    fontSize: "32px",
+    fill: "#fff"
+  });
+  
+  // Collisions
+  this.physics.add.collider(joueur, plateformes);
+  this.physics.add.collider(etoiles, plateformes);
+  
+  // Récupération des étoiles
+  this.physics.add.overlap(joueur, etoiles, collecterEtoile, null, this);
+}
+
+// Mise à jour du jeu
+function update() {
+  // Contrôles gauche-droite
+  if (curseurs.left.isDown) {
+    joueur.setVelocityX(-160);
+    joueur.anims.play("gauche", true);
+  } else if (curseurs.right.isDown) {
+    joueur.setVelocityX(160);
+    joueur.anims.play("droite", true);
+  } else {
+    joueur.setVelocityX(0);
+    joueur.anims.play("face");
+  }
+  
+  // Saut
+  if (curseurs.up.isDown && joueur.body.touching.down) {
+    joueur.setVelocityY(-330);
+  }
+}
+
+// Fonction pour collecter une étoile
+function collecterEtoile(joueur, etoile) {
+  etoile.disableBody(true, true);
+  
+  // Augmenter le score
+  score += 10;
+  scoreText.setText("Score: " + score);
+  
+  // Vérifier s'il reste des étoiles
+  if (etoiles.countActive(true) === 0) {
+    // Réactiver toutes les étoiles
+    etoiles.children.iterate(function(enfant) {
+      enfant.enableBody(true, enfant.x, 0, true, true);
+    });
+  }
+}
