@@ -207,7 +207,11 @@ export class NekoParser {
     const name = this.consume('identifier', 'Expected variable name').value;
     this.consume('operator', '=');
     const initializer = this.parseExpression();
-    this.consume('operator', ';');
+    
+    // Rendre le point-virgule optionnel
+    if (this.check('operator') && this.peek().value === ';') {
+      this.advance(); // Consommer le point-virgule si présent
+    }
     
     return {
       type: 'VariableDeclaration',
@@ -373,7 +377,10 @@ export class NekoParser {
     // Handle different import syntax styles
     if (keyword === 'importer') {
       const name = this.consume('identifier', 'Expected import name').value;
-      this.consume('operator', ';');
+      // Rendre le point-virgule optionnel
+      if (this.check('operator') && this.peek().value === ';') {
+        this.advance(); // Consommer le point-virgule si présent
+      }
       
       return {
         type: 'ImportStatement',
@@ -390,12 +397,15 @@ export class NekoParser {
         source = this.consume('string', 'Expected import source').value;
       }
       
-      this.consume('operator', ';');
+      // Rendre le point-virgule optionnel
+      if (this.check('operator') && this.peek().value === ';') {
+        this.advance(); // Consommer le point-virgule si présent
+      }
       
       return {
         type: 'ImportStatement',
         name,
-        source
+        source: name // Si source est null, utiliser le nom comme source
       };
     }
   }
@@ -405,7 +415,11 @@ export class NekoParser {
     this.advance(); // Skip 'retourner' or 'nekRetourner'
     
     const value = this.parseExpression();
-    this.consume('operator', ';');
+    
+    // Rendre le point-virgule optionnel
+    if (this.check('operator') && this.peek().value === ';') {
+      this.advance(); // Consommer le point-virgule si présent
+    }
     
     return {
       type: 'ReturnStatement',
@@ -415,7 +429,11 @@ export class NekoParser {
 
   private parseExpressionStatement(): NekoAST {
     const expr = this.parseExpression();
-    this.consume('operator', ';');
+    
+    // Rendre le point-virgule optionnel
+    if (this.check('operator') && this.peek().value === ';') {
+      this.advance(); // Consommer le point-virgule si présent
+    }
     
     return {
       type: 'ExpressionStatement',
@@ -424,7 +442,7 @@ export class NekoParser {
   }
 
   private parseExpression(): NekoAST {
-    // Very simplified expression parsing
+    // Analyse d'expression améliorée
     const token = this.peek();
     
     if (token.type === 'string') {
@@ -442,7 +460,21 @@ export class NekoParser {
     } else if (token.type === 'identifier') {
       this.advance();
       
-      // Check for function call
+      // Vérifier les expressions composées comme "obj.methode"
+      let identifier = token.value;
+      
+      // Gestion des appels de méthodes (obj.method)
+      while (this.peek().value === '.') {
+        this.advance(); // Skip '.'
+        
+        if (this.peek().type === 'identifier') {
+          identifier += '.' + this.advance().value;
+        } else {
+          break;
+        }
+      }
+      
+      // Vérifier si c'est un appel de fonction/méthode
       if (this.peek().value === '(') {
         this.advance(); // Skip '('
         
@@ -450,6 +482,12 @@ export class NekoParser {
         
         if (this.peek().value !== ')') {
           do {
+            // Permettre les expressions vides (comme dans obj.method(,))
+            if (this.peek().value === ',') {
+              this.advance(); // Skip la virgule
+              continue;
+            }
+            
             args.push(this.parseExpression());
             
             if (this.peek().value !== ',') break;
@@ -457,11 +495,14 @@ export class NekoParser {
           } while (true);
         }
         
-        this.consume('operator', ')');
+        // Être plus permissif avec la parenthèse fermante
+        if (this.peek().value === ')') {
+          this.advance(); // Skip ')'
+        }
         
         return {
           type: 'CallExpression',
-          callee: token.value,
+          callee: identifier,
           arguments: args
         };
       }
@@ -469,7 +510,7 @@ export class NekoParser {
       // Simple identifier
       return {
         type: 'Identifier',
-        name: token.value
+        name: identifier
       };
     } else {
       this.advance(); // Skip unknown token in expression
