@@ -1,0 +1,45 @@
+// Exemple d'utilisation d'un package nekoScript
+importer NekoUtils;
+
+nekAfficher("Bienvenue dans l'exemple d'utilisation de packages nekoScript!");
+
+// Utilisation des fonctions de formatage
+nekVariable aujourdhui = new Date();
+nekVariable dateFormatee = NekoUtils.formatDate(aujourdhui);
+nekAfficher("Aujourd'hui nous sommes le " + dateFormatee);
+
+nekVariable prix = 42.5;
+nekVariable prixFormate = NekoUtils.formatMontant(prix);
+nekAfficher("Le prix est de " + prixFormate);
+
+// Utilisation des fonctions de validation
+nekVariable email = "utilisateur@example.com";
+si (NekoUtils.estEmail(email)) {
+  nekAfficher("L'email " + email + " est valide");
+} sinon {
+  nekAfficher("L'email " + email + " n'est pas valide");
+}
+
+nekVariable telephone = "+33 6 12 34 56 78";
+si (NekoUtils.estTelephone(telephone)) {
+  nekAfficher("Le numéro " + telephone + " est valide");
+} sinon {
+  nekAfficher("Le numéro " + telephone + " n'est pas valide");
+}
+
+// Utilisation des fonctions de transformation de texte
+nekVariable texte = "bonjour tout le monde";
+nekVariable texteCapitalise = NekoUtils.capitaliser(texte);
+nekAfficher("Texte capitalisé: " + texteCapitalise);
+
+nekVariable longTexte = "Ceci est un texte très long qui devrait être tronqué par notre fonction de troncature. Voyons voir si cela fonctionne correctement.";
+nekVariable texteTronque = NekoUtils.tronquer(longTexte, 50);
+nekAfficher("Texte tronqué: " + texteTronque);
+
+// Utilisation des fonctions de manipulation d'array
+nekVariable fruits = ["pomme", "banane", "orange", "fraise", "kiwi"];
+nekVariable fruitAleatoire = NekoUtils.aleatoireElement(fruits);
+nekAfficher("Fruit aléatoire: " + fruitAleatoire);
+
+nekVariable fruitsMelanges = NekoUtils.melangerTableau(fruits);
+nekAfficher("Fruits mélangés: " + fruitsMelanges.join(", "));
