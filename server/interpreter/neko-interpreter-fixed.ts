@@ -1,5 +1,15 @@
-import { NekoAST } from "./neko-parser";
-import { nekoParser } from "./neko-parser";
+import { NekoAST, nekoParser } from './neko-parser';
+
+/**
+ * Interface for package data
+ */
+interface NekoPackage {
+  name: string;
+  code: string;
+  isJavaScript: boolean;
+  version: string;
+  publishedAt: string;
+}
 
 /**
  * Simple interpreter for nekoScript language
@@ -8,13 +18,15 @@ import { nekoParser } from "./neko-parser";
 export class NekoInterpreter {
   private environment: Map<string, any> = new Map();
   private modules: Map<string, any> = new Map();
-  private packageRegistry: Map<string, any> = new Map();
+  private packageRegistry: Map<string, NekoPackage> = new Map();
 
   constructor() {
     this.initializeStandardLibrary();
   }
   
-  // Initialize all standard library functions
+  /**
+   * Initializer for standard library functions
+   */
   private initializeStandardLibrary() {
     // Core functions
     this.environment.set('nekAfficher', (...args: any[]) => {
@@ -91,6 +103,9 @@ export class NekoInterpreter {
     });
   }
 
+  /**
+   * Main execution method for nekoScript code
+   */
   async execute(code: string): Promise<string> {
     try {
       const ast = nekoParser.parse(code);
@@ -100,17 +115,20 @@ export class NekoInterpreter {
     }
   }
 
+  /**
+   * Main evaluation method for AST nodes
+   */
   private evaluate(node: NekoAST): any {
-    // Gestion du code JavaScript pur
+    // Handle pure JavaScript code
     if (node.type === 'Program' && node.body.length > 0) {
-      // Si premier token est de type javascript
+      // Check if first token is JavaScript type
       if (node.body[0].type === 'javascript' || 
           (node.body[0].type === 'ExpressionStatement' && 
            node.body[0].expression && 
            node.body[0].expression.type === 'StringLiteral' && 
            node.body[0].expression.value.trim().startsWith('// JavaScript'))) {
         
-        // Extraire et exécuter le code JavaScript
+        // Extract and execute JavaScript code
         let jsCode = '';
         if (node.body[0].type === 'javascript') {
           jsCode = node.body[0].value;
@@ -119,7 +137,7 @@ export class NekoInterpreter {
         }
         
         try {
-          // Exécuter en mode sécurisé avec contexte nekoScript
+          // Execute in safe mode with nekoScript context
           return this.executeJavaScript(jsCode);
         } catch (error: any) {
           return `Erreur JavaScript: ${error.message}`;
@@ -173,6 +191,9 @@ export class NekoInterpreter {
     }
   }
 
+  /**
+   * Evaluates a program node
+   */
   private evaluateProgram(node: NekoAST): string {
     let result = '';
     
@@ -190,11 +211,17 @@ export class NekoInterpreter {
     return result.trim();
   }
 
+  /**
+   * Evaluates a variable declaration
+   */
   private evaluateVariableDeclaration(node: NekoAST): void {
     const value = this.evaluate(node.initializer);
     this.environment.set(node.name, value);
   }
 
+  /**
+   * Evaluates a function declaration
+   */
   private evaluateFunctionDeclaration(node: NekoAST): void {
     const fn = (...args: any[]) => {
       // Create new scope
@@ -227,6 +254,9 @@ export class NekoInterpreter {
     this.environment.set(node.name, fn);
   }
 
+  /**
+   * Evaluates an if statement
+   */
   private evaluateIfStatement(node: NekoAST): any {
     const condition = this.evaluate(node.condition);
     
@@ -243,6 +273,9 @@ export class NekoInterpreter {
     }
   }
 
+  /**
+   * Evaluates a module declaration
+   */
   private evaluateModuleDeclaration(node: NekoAST): void {
     const module: any = {};
     
@@ -269,6 +302,9 @@ export class NekoInterpreter {
     this.modules.set(node.name, module);
   }
 
+  /**
+   * Evaluates an import statement
+   */
   private evaluateImportStatement(node: NekoAST): void {
     if (node.source) {
       // Simulated external module import
@@ -328,13 +364,59 @@ export class NekoInterpreter {
                 // Simulate key handler
                 return `Gestionnaire de touche configuré pour ${key}`;
               },
+              afficherTexte: (texte: string, x: number, y: number, couleur: string = "white") => {
+                return `Texte affiché: ${texte} à (${x}, ${y})`;
+              },
+              surMiseAJour: (fn: Function) => {
+                return "Gestionnaire de mise à jour configuré";
+              },
               démarrer: () => "Jeu démarré"
             };
             return canvas;
           }
         });
+      } else if (node.source === 'Web.neko') {
+        this.environment.set(node.name, {
+          Express: () => {
+            const app = {
+              utiliser: (middleware: any) => "Middleware ajouté",
+              route: (method: string, path: string, handler: Function) => {
+                console.log(`Route ${method} ${path} configurée`);
+                return `Route ${method} ${path} configurée`;
+              },
+              écouter: (port: number, callback: Function) => {
+                console.log(`Serveur Web démarré sur le port ${port}`);
+                if (callback) callback();
+                return `Serveur Web démarré sur le port ${port}`;
+              }
+            };
+            return app;
+          },
+          Static: (directory: string) => {
+            return `Middleware statique pour ${directory}`;
+          }
+        });
       } else {
-        throw new Error(`Module non trouvé: ${node.source}`);
+        // Try to load from package registry
+        if (this.packageRegistry.has(node.source)) {
+          const pkg = this.packageRegistry.get(node.source)!;
+          
+          if (pkg.isJavaScript) {
+            // For JS packages
+            const moduleExports = this.executeJavaScript(pkg.code);
+            this.environment.set(node.name, moduleExports);
+          } else {
+            // For nekoScript packages
+            const ast = nekoParser.parse(pkg.code);
+            this.evaluate(ast);
+            // If module is defined, use it
+            if (this.modules.has(node.name)) {
+              this.environment.set(node.name, this.modules.get(node.name));
+            }
+          }
+        } else {
+          throw new Error(`Module non trouvé: ${node.source}`);
+        }
       }
     } else if (this.modules.has(node.name)) {
       // Import local module
@@ -344,11 +426,17 @@ export class NekoInterpreter {
     }
   }
 
+  /**
+   * Evaluates a return statement
+   */
   private evaluateReturnStatement(node: NekoAST): any {
     const value = this.evaluate(node.value);
     return { __isReturn: true, value };
   }
   
+  /**
+   * Evaluates a call expression
+   */
   private evaluateCallExpression(node: NekoAST): any {
     // Handle method calls (e.g., obj.method())
     if (node.callee.includes('.')) {
@@ -387,31 +475,30 @@ export class NekoInterpreter {
     return fn(...args);
   }
   
-  // Exécution sécurisée de code JavaScript
+  /**
+   * Safely executes JavaScript code with nekoScript context
+   */
   private executeJavaScript(jsCode: string): any {
     try {
-      // Créer un contexte avec les fonctions nekoScript disponibles
+      // Create context with nekoScript functions
       const context: any = {};
       
-      // Ajouter les fonctions de l'environment nekoScript
+      // Add nekoScript environment functions
       this.environment.forEach((value, key) => {
         context[key] = value;
       });
       
-      // Ajouter des alias pour les fonctions JavaScript <-> nekoScript
+      // Add aliases for JavaScript <-> nekoScript
       context.console = console;
       context.require = require;
       context.nekAfficher = console.log;
       context.nekRequire = require;
       
-      // Exécuter le code dans ce contexte
+      // Execute in context
       const result = eval(`
-        (function(context) {
-          const { ${Object.keys(context).join(', ')} } = context;
-          return (function() {
-            ${jsCode}
-          })();
-        })(${JSON.stringify(context)})
+        (function() {
+          ${jsCode}
+        })()
       `);
       
       return result;
@@ -420,18 +507,18 @@ export class NekoInterpreter {
     }
   }
   
-  // Gestion des packages
-  
-  // Publier un package
+  /**
+   * Publishes a package to the registry
+   */
   async publishPackage(code: string, name: string, isJavaScript: boolean = false): Promise<string> {
     try {
-      // Vérifier si le package existe déjà
+      // Check if package already exists
       if (this.packageRegistry.has(name)) {
         return `Erreur: Un package avec le nom '${name}' existe déjà`;
       }
       
-      // Créer un objet package
-      const packageObj = {
+      // Create package object
+      const packageObj: NekoPackage = {
         name,
         code,
         isJavaScript,
@@ -439,7 +526,7 @@ export class NekoInterpreter {
         publishedAt: new Date().toISOString()
       };
       
-      // Enregistrer le package
+      // Register package
       this.packageRegistry.set(name, packageObj);
       
       return `Package '${name}' publié avec succès!`;
@@ -448,24 +535,26 @@ export class NekoInterpreter {
     }
   }
   
-  // Télécharger un package
+  /**
+   * Downloads a package from the registry
+   */
   async downloadPackage(name: string): Promise<string> {
     try {
-      // Vérifier si le package existe
+      // Check if package exists
       if (!this.packageRegistry.has(name)) {
         return `Erreur: Package '${name}' non trouvé`;
       }
       
-      // Récupérer le package
-      const pkg = this.packageRegistry.get(name);
+      // Get package
+      const pkg = this.packageRegistry.get(name)!;
       
-      // Ajouter au registre de modules
+      // Add to module registry
       if (pkg.isJavaScript) {
-        // Pour les packages JS, évaluer et exposer
+        // For JS packages, evaluate and expose
         const moduleExports = this.executeJavaScript(pkg.code);
         this.modules.set(name, moduleExports);
       } else {
-        // Pour les packages nekoScript, analyser et évaluer
+        // For nekoScript packages, parse and evaluate
         const ast = nekoParser.parse(pkg.code);
         this.evaluate(ast);
       }
@@ -476,7 +565,9 @@ export class NekoInterpreter {
     }
   }
   
-  // Lister les packages disponibles
+  /**
+   * Lists available packages in the registry
+   */
   listPackages(): string {
     try {
       if (this.packageRegistry.size === 0) {
@@ -496,4 +587,4 @@ export class NekoInterpreter {
   }
 }
 
-export const nekoInterpreter = new NekoInterpreter();
+export const nekoInterpreterFixed = new NekoInterpreter();

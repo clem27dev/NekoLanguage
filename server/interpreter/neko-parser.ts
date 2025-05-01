@@ -45,12 +45,21 @@ export class NekoParser {
   private tokenize(code: string): void {
     this.tokens = [];
     
+    // Vérifier si c'est du JavaScript pur pour compatibilité
+    if (code.trim().startsWith('//') && code.includes('JavaScript')) {
+      this.tokens.push({ type: 'javascript', value: code });
+      this.tokens.push({ type: 'EOF', value: '' });
+      return;
+    }
+    
     // Enhanced tokenizer with support for more nekoScript syntax
     
     const keywords = [
       'nekVariable', 'nekFonction', 'nekSi', 'nekSinon', 'nekPour', 
       'nekTantQue', 'nekRetourner', 'nekImporter', 'nekModule', 'nekNouveau',
-      'nekDepuis', 'importer', 'si', 'sinon', 'retourner', 'pour', 'tantque'
+      'nekDepuis', 'importer', 'si', 'sinon', 'retourner', 'pour', 'tantque',
+      'require', 'function', 'class', 'const', 'let', 'var', 'export', 'import',
+      'nekExporter', 'nekRequire', 'nekRoute', 'nekServeur', 'nekBot', 'nekPackage'
     ];
     
     let current = 0;
