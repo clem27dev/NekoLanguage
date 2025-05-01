@@ -1,0 +1,23 @@
+// Exemple de programme utilisant les packages NekoUtils et NekoAnimation
+nekImporter NekoUtils;
+nekImporter NekoAnimation;
+
+nekVariable nom = "neko script";
+nekAfficher(NekoUtils.capitaliser(nom)); // Devrait afficher "Neko script"
+
+nekVariable texte = "Ce texte est trop long et devrait être tronqué";
+nekAfficher(NekoUtils.tronquer(texte, 15, "...")); // Devrait afficher "Ce texte est tr..."
+
+// Utilisation du module d'animation (simulation)
+nekVariable element = { style: {} };
+nekVariable animation = new NekoAnimation();
+
+animation.creerAnimation("fadeIn", 1000, [
+  { opacity: 0 },
+  { opacity: 1 }
+]);
+
+animation.jouerAnimation("fadeIn", element);
+
+nekAfficher("Animation créée et lancée");
+nekAfficher("Version de NekoUtils: " + NekoUtils.VERSION);

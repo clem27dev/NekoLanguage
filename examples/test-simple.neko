@@ -1,0 +1,11 @@
+// Script de test simple
+nekVariable message = "Bonjour nekoScript !";
+nekAfficher(message);
+
+si (1 + 1 === 2) {
+  nekAfficher("Les maths fonctionnent !");
+}
+
+pour (nekVariable i = 0; i < 3; i++) {
+  nekAfficher("Boucle #" + i);
+}
