@@ -1,0 +1,200 @@
+// Exemple réel de jeu avec nekoScript
+// Pour utiliser ce script, installez canvas: npm install canvas
+
+// Import du module NekoJeu avec canvas réel
+nekImporter NekoJeu
+
+// Configuration du jeu
+nekVariable largeur = 800
+nekVariable hauteur = 600
+nekVariable jeu = NekoJeu.Canvas(largeur, hauteur, "Mon Jeu nekoScript")
+
+// Variables de jeu
+nekVariable score = 0
+nekVariable vies = 3
+nekVariable niveau = 1
+nekVariable joueurX = largeur / 2
+nekVariable joueurY = hauteur - 50
+nekVariable vitesseJoueur = 5
+nekVariable projectiles = []
+nekVariable ennemis = []
+nekVariable jeuEnCours = true
+
+// Création du joueur
+nekFonction initialiserJoueur() {
+  retourner jeu.créerSprite("joueur.png", joueurX, joueurY, 50, 30)
+}
+
+// Création d'un ennemi
+nekFonction creerEnnemi(x, y) {
+  nekVariable ennemi = jeu.créerSprite("ennemi.png", x, y, 40, 40)
+  ennemi.vitesseX = Math.random() * 2 - 1  // Vitesse entre -1 et 1
+  ennemi.vitesseY = 1 + Math.random() * niveau * 0.5
+  ennemi.valeur = 10 * niveau
+  retourner ennemi
+}
+
+// Création d'un projectile
+nekFonction tirer() {
+  nekVariable projectile = jeu.créerSprite("projectile.png", joueurX + 20, joueurY - 10, 10, 20)
+  projectile.vitesseY = -8  // Vitesse négative pour monter
+  projectiles.push(projectile)
+}
+
+// Initialisation du joueur
+nekVariable joueur = initialiserJoueur()
+
+// Gestionnaires de touches
+// Touche gauche
+jeu.surTouche("ArrowLeft", (estAppuyée) => {
+  si (estAppuyée) {
+    joueurX -= vitesseJoueur
+    
+    // Limiter aux bords de l'écran
+    si (joueurX < 0) joueurX = 0
+    
+    // Mettre à jour la position du sprite
+    joueur.nekBouger(joueurX - joueur.x, 0)
+  }
+})
+
+// Touche droite
+jeu.surTouche("ArrowRight", (estAppuyée) => {
+  si (estAppuyée) {
+    joueurX += vitesseJoueur
+    
+    // Limiter aux bords de l'écran
+    si (joueurX > largeur - 50) joueurX = largeur - 50
+    
+    // Mettre à jour la position du sprite
+    joueur.nekBouger(joueurX - joueur.x, 0)
+  }
+})
+
+// Touche espace pour tirer
+jeu.surTouche("Space", (estAppuyée) => {
+  si (estAppuyée && jeuEnCours) {
+    tirer()
+  }
+})
+
+// Fonction pour créer des ennemis périodiquement
+nekFonction creerEnnemisAleatoires() {
+  si (!jeuEnCours) retourner
+  
+  // Fréquence d'apparition basée sur le niveau
+  nekVariable nombreEnnemis = Math.min(niveau + 1, 5)
+  
+  pour (nekVariable i = 0; i < nombreEnnemis; i++) {
+    nekVariable x = Math.random() * (largeur - 50)
+    nekVariable y = Math.random() * 100
+    
+    nekVariable ennemi = creerEnnemi(x, y)
+    ennemis.push(ennemi)
+  }
+}
+
+// Fonction pour détection de collision
+nekFonction detecterCollision(objetA, objetB) {
+  retourner !(objetA.x + objetA.width < objetB.x || 
+              objetA.x > objetB.x + objetB.width || 
+              objetA.y + objetA.height < objetB.y || 
+              objetA.y > objetB.y + objetB.height)
+}
+
+// Fonction pour passer au niveau suivant
+nekFonction niveauSuivant() {
+  niveau += 1
+  score += niveau * 50
+  vitesseJoueur += 0.5
+  
+  // Augmenter la difficulté
+  creerEnnemisAleatoires()
+}
+
+// Boucle principale du jeu
+jeu.surMiseAJour(() => {
+  si (!jeuEnCours) {
+    jeu.afficherTexte("GAME OVER", largeur/2 - 80, hauteur/2, "red", "36px Arial")
+    jeu.afficherTexte("Score final: " + score, largeur/2 - 80, hauteur/2 + 40, "white", "20px Arial")
+    jeu.afficherTexte("Appuyez sur ESPACE pour recommencer", largeur/2 - 150, hauteur/2 + 80, "white", "16px Arial")
+    retourner
+  }
+  
+  // Mise à jour des projectiles
+  pour (nekVariable i = projectiles.length - 1; i >= 0; i--) {
+    nekVariable projectile = projectiles[i]
+    projectile.y += projectile.vitesseY
+    
+    // Supprimer les projectiles hors écran
+    si (projectile.y < -20) {
+      projectiles.splice(i, 1)
+      continuer
+    }
+    
+    // Vérifier les collisions avec les ennemis
+    pour (nekVariable j = ennemis.length - 1; j >= 0; j--) {
+      nekVariable ennemi = ennemis[j]
+      
+      si (detecterCollision(projectile, ennemi)) {
+        // Incrémenter le score
+        score += ennemi.valeur
+        
+        // Supprimer l'ennemi et le projectile
+        ennemis.splice(j, 1)
+        projectiles.splice(i, 1)
+        break
+      }
+    }
+  }
+  
+  // Mise à jour des ennemis
+  pour (nekVariable i = ennemis.length - 1; i >= 0; i--) {
+    nekVariable ennemi = ennemis[i]
+    
+    // Déplacer l'ennemi
+    ennemi.x += ennemi.vitesseX
+    ennemi.y += ennemi.vitesseY
+    
+    // Rebondir sur les bords
+    si (ennemi.x <= 0 || ennemi.x >= largeur - ennemi.width) {
+      ennemi.vitesseX *= -1
+    }
+    
+    // Supprimer les ennemis qui sortent de l'écran
+    si (ennemi.y > hauteur) {
+      ennemis.splice(i, 1)
+      vies -= 1
+      
+      si (vies <= 0) {
+        jeuEnCours = false
+      }
+      
+      continuer
+    }
+    
+    // Vérifier collision avec le joueur
+    si (detecterCollision(joueur, ennemi)) {
+      vies -= 1
+      ennemis.splice(i, 1)
+      
+      si (vies <= 0) {
+        jeuEnCours = false
+      }
+    }
+  }
+  
+  // Créer de nouveaux ennemis si nécessaire
+  si (ennemis.length === 0) {
+    niveauSuivant()
+  }
+  
+  // Affichage des informations
+  jeu.afficherTexte("Score: " + score, 10, 30, "white", "20px Arial")
+  jeu.afficherTexte("Vies: " + vies, 10, 60, "white", "20px Arial")
+  jeu.afficherTexte("Niveau: " + niveau, 10, 90, "white", "20px Arial")
+})
+
+// Démarrer le jeu
+jeu.démarrer()
+nekAfficher("Jeu démarré! Utilisez les flèches ← → pour déplacer le vaisseau et ESPACE pour tirer.")

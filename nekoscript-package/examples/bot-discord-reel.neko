@@ -1,0 +1,73 @@
+// Exemple réel de bot Discord avec nekoScript
+// Pour utiliser ce script, installez discord.js: npm install discord.js
+// Puis remplacez VOTRE_TOKEN par un token Discord valide
+
+// Import du module Discord.js (exécution réelle)
+nekImporter Discord
+
+// Configuration du bot
+nekVariable token = "VOTRE_TOKEN" // À remplacer par un vrai token
+nekVariable prefixe = "!"
+
+// Création du bot Discord
+nekVariable bot = Discord.Bot(token)
+
+// Gestionnaire de commande !ping
+bot.surCommande(prefixe, (commande) => {
+  // Vérifier quelle commande a été appelée
+  si (commande.nom === "ping") {
+    commande.repondre("Pong! 🏓")
+    nekAfficher("Commande ping utilisée par " + commande.auteur.nom)
+  }
+  
+  // Commande d'aide
+  si (commande.nom === "aide") {
+    commande.repondre("**Commandes disponibles:**\n" +
+                     "!ping - Vérifier si le bot répond\n" +
+                     "!aide - Afficher cette aide\n" +
+                     "!info - Afficher des informations sur le bot\n" +
+                     "!salut - Le bot vous salue personnellement")
+  }
+  
+  // Commande d'info
+  si (commande.nom === "info") {
+    // Utilisation d'embeds Discord
+    nekVariable embed = bot.créerEmbed(
+      "Bot nekoScript",
+      "Ce bot a été créé avec le langage nekoScript! 🐱",
+      "#9B59B6"
+    )
+    
+    // Ajouter des champs à l'embed
+    embed.ajouterChamp("Langage", "nekoScript", true)
+    embed.ajouterChamp("Préfixe", prefixe, true)
+    embed.ajouterChamp("Version", "1.1.0", true)
+    embed.définirTimestamp()
+    
+    // Envoyer l'embed
+    commande.canal.envoyer({ embeds: [embed.embed] })
+  }
+  
+  // Commande salut avec argument
+  si (commande.nom === "salut") {
+    nekVariable nom = commande.arguments[0] || commande.auteur.nom
+    commande.repondre("Bonjour " + nom + "! 👋")
+  }
+})
+
+// Gestionnaire de messages
+bot.surMessage((message) => {
+  // Répondre à des messages spécifiques
+  si (message.contenu contient "bonjour") {
+    message.reagir("👋")
+  }
+  
+  si (message.contenu contient "nekoScript") {
+    message.repondre("Quelqu'un a mentionné mon langage préféré! 🐱")
+  }
+})
+
+// Connexion réelle à Discord
+nekAfficher("Démarrage du bot Discord...")
+bot.démarrer()
+nekAfficher("Le bot est maintenant en ligne! Utilisez " + prefixe + "aide pour voir les commandes disponibles.")

@@ -1,0 +1,190 @@
+// Exemple réel d'application web avec nekoScript
+// Pour utiliser ce script, installez express: npm install express
+
+// Import du module Web (Express réel)
+nekImporter Web
+
+// Création d'une application Express réelle
+nekVariable app = Web.Express()
+
+// Configurer des middlewares
+app.utiliser(Web.Static("./public")) // Servir des fichiers statiques depuis ./public
+
+// Route principale (GET /)
+app.route("GET", "/", (req, res) => {
+  res.envoyer(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Application nekoScript</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 2rem;
+          line-height: 1.6;
+        }
+        header {
+          text-align: center;
+          margin-bottom: 2rem;
+          padding-bottom: 1rem;
+          border-bottom: 2px solid #f0f0f0;
+        }
+        h1 {
+          color: #333;
+        }
+        .card {
+          background: #f9f9f9;
+          border-radius: 8px;
+          padding: 1.5rem;
+          margin-bottom: 1.5rem;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button {
+          background: #6b46c1;
+          color: white;
+          border: none;
+          padding: 0.5rem 1rem;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 1rem;
+        }
+        button:hover {
+          background: #553c9a;
+        }
+        #message {
+          margin-top: 1rem;
+          padding: 1rem;
+          background: #e9e9e9;
+          border-radius: 4px;
+          display: none;
+        }
+      </style>
+    </head>
+    <body>
+      <header>
+        <h1>Application Web nekoScript</h1>
+        <p>Ce site fonctionne avec un serveur créé en nekoScript!</p>
+      </header>
+      
+      <div class="card">
+        <h2>Test d'API</h2>
+        <p>Cliquez sur le bouton ci-dessous pour tester l'API REST:</p>
+        <button id="testApi">Tester l'API</button>
+        <div id="message"></div>
+      </div>
+      
+      <div class="card">
+        <h2>Formulaire</h2>
+        <form id="myForm">
+          <div>
+            <label for="name">Nom:</label>
+            <input type="text" id="name" name="name" required>
+          </div>
+          <div style="margin-top: 1rem;">
+            <label for="message">Message:</label>
+            <textarea id="message-input" name="message" rows="3" required></textarea>
+          </div>
+          <button type="submit" style="margin-top: 1rem;">Envoyer</button>
+        </form>
+        <div id="formResponse" style="margin-top: 1rem;"></div>
+      </div>
+      
+      <script>
+        // Test de l'API
+        document.getElementById('testApi').addEventListener('click', async () => {
+          const messageBox = document.getElementById('message');
+          messageBox.style.display = 'block';
+          messageBox.textContent = 'Envoi de la requête...';
+          
+          try {
+            const response = await fetch('/api/hello');
+            const data = await response.json();
+            
+            messageBox.textContent = 'Réponse du serveur: ' + data.message;
+          } catch (error) {
+            messageBox.textContent = 'Erreur: ' + error.message;
+          }
+        });
+        
+        // Formulaire
+        document.getElementById('myForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const responseDiv = document.getElementById('formResponse');
+          responseDiv.textContent = 'Envoi des données...';
+          
+          const formData = {
+            name: document.getElementById('name').value,
+            message: document.getElementById('message-input').value
+          };
+          
+          try {
+            const response = await fetch('/api/submit', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            responseDiv.textContent = 'Message envoyé! Le serveur dit: ' + data.message;
+          } catch (error) {
+            responseDiv.textContent = 'Erreur: ' + error.message;
+          }
+        });
+      </script>
+    </body>
+    </html>
+  `)
+})
+
+// API REST réelle (GET /api/hello)
+app.route("GET", "/api/hello", (req, res) => {
+  nekAfficher("Requête GET /api/hello reçue")
+  res.json({
+    success: true,
+    message: "Bonjour depuis l'API nekoScript!",
+    timestamp: new Date().toISOString()
+  })
+})
+
+// API POST pour le formulaire
+app.route("POST", "/api/submit", (req, res) => {
+  nekVariable nom = req.corps.name
+  nekVariable message = req.corps.message
+  
+  nekAfficher("Formulaire reçu de: " + nom)
+  nekAfficher("Message: " + message)
+  
+  // Dans une vraie application, on sauvegarderait ces données
+  res.json({
+    success: true,
+    message: "Merci pour votre message, " + nom + "!",
+    timestamp: new Date().toISOString()
+  })
+})
+
+// Route dynamique avec paramètres
+app.route("GET", "/utilisateur/:id", (req, res) => {
+  nekVariable userId = req.params.id
+  nekAfficher("Demande d'informations pour l'utilisateur: " + userId)
+  
+  // Simuler une recherche en base de données
+  res.json({
+    id: userId,
+    nom: "Utilisateur " + userId,
+    dateInscription: new Date().toISOString()
+  })
+})
+
+// Démarrer le serveur web
+nekVariable port = 3000
+nekAfficher("Démarrage du serveur web sur le port " + port + "...")
+app.écouter(port, () => {
+  nekAfficher("Serveur web démarré avec succès!")
+  nekAfficher("Ouvrez votre navigateur à l'adresse: http://localhost:" + port)
+})

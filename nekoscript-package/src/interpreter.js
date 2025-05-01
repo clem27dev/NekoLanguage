@@ -328,95 +328,490 @@ class NekoInterpreter {
 
   evaluateImportStatement(node) {
     if (node.source) {
-      // Simulated external module import
+      // Intégration RÉELLE avec modules externes
       if (node.source === 'Discord.neko') {
-        this.environment.set(node.name, {
-          Bot: (token) => {
-            const bot = {
-              surMessage: (fn) => {
-                // Simulate bot functionality
-                console.log("Gestionnaire de message Discord configuré");
-                return "Bot Discord configuré avec gestionnaire de messages";
-              },
-              surReaction: (fn) => {
-                console.log("Gestionnaire de réaction Discord configuré");
-                return "Bot Discord configuré avec gestionnaire de réactions";
-              },
-              surCommande: (commande, fn) => {
-                console.log(`Commande Discord '${commande}' configurée`);
-                return `Bot Discord configuré avec la commande '${commande}'`;
-              },
-              changerStatut: (message, type = "JOUE") => {
-                console.log(`Statut Discord changé: ${type} ${message}`);
-                return `Statut Discord du bot changé: ${type} ${message}`;
-              },
-              créerEmbed: (titre, description, couleur = "#5865F2") => {
-                console.log(`Création d'un embed Discord: ${titre}`);
-                return {
-                  embed: {
-                    title: titre,
-                    description: description,
-                    color: couleur
+        try {
+          // Utiliser Discord.js réel pour les bots Discord
+          const Discord = require('discord.js');
+          
+          this.environment.set(node.name, {
+            Bot: (token) => {
+              try {
+                // Créer un client Discord.js réel avec les intents nécessaires
+                const client = new Discord.Client({ 
+                  intents: [
+                    Discord.GatewayIntentBits.Guilds,
+                    Discord.GatewayIntentBits.GuildMessages, 
+                    Discord.GatewayIntentBits.MessageContent,
+                    Discord.GatewayIntentBits.GuildMessageReactions
+                  ] 
+                });
+
+                // Indiquer lorsque le bot est prêt
+                client.once('ready', () => {
+                  console.log(`Bot Discord connecté en tant que ${client.user.tag}`);
+                });
+
+                const bot = {
+                  surMessage: (fn) => {
+                    // Gestionnaire réel de messages
+                    client.on('messageCreate', (message) => {
+                      if (message.author.bot) return; // Ignorer les messages des bots
+                      
+                      // Créer un objet message adapté pour nekoScript
+                      const nekoMessage = {
+                        contenu: message.content,
+                        auteur: {
+                          nom: message.author.username,
+                          id: message.author.id,
+                          avatar: message.author.displayAvatarURL()
+                        },
+                        canal: {
+                          nom: message.channel.name,
+                          id: message.channel.id,
+                          envoyer: (texte) => message.channel.send(texte)
+                        },
+                        repondre: (texte) => message.reply(texte),
+                        reagir: (emoji) => message.react(emoji)
+                      };
+                      
+                      // Appeler la fonction utilisateur avec notre objet message
+                      fn(nekoMessage);
+                    });
+                    
+                    console.log("Gestionnaire de message Discord configuré (RÉEL)");
+                    return "Bot Discord configuré avec gestionnaire de messages";
                   },
-                  ajouterChamp: (nom, valeur, inline = false) => {
-                    console.log(`Champ ajouté à l'embed: ${nom}`);
-                    return "Champ ajouté à l'embed";
+                  
+                  surReaction: (fn) => {
+                    // Gestionnaire réel de réactions
+                    client.on('messageReactionAdd', (reaction, user) => {
+                      if (user.bot) return; // Ignorer les réactions des bots
+                      
+                      const nekoReaction = {
+                        emoji: reaction.emoji.name,
+                        utilisateur: {
+                          nom: user.username,
+                          id: user.id
+                        },
+                        message: {
+                          id: reaction.message.id,
+                          contenu: reaction.message.content,
+                          auteur: {
+                            nom: reaction.message.author.username,
+                            id: reaction.message.author.id
+                          }
+                        }
+                      };
+                      
+                      fn(nekoReaction);
+                    });
+                    
+                    console.log("Gestionnaire de réaction Discord configuré (RÉEL)");
+                    return "Bot Discord configuré avec gestionnaire de réactions";
+                  },
+                  
+                  surCommande: (prefixe, fn) => {
+                    // Gestionnaire réel de commandes
+                    client.on('messageCreate', (message) => {
+                      if (message.author.bot) return; // Ignorer les messages des bots
+                      if (!message.content.startsWith(prefixe)) return; // Vérifier le préfixe
+                      
+                      const args = message.content.slice(prefixe.length).trim().split(/ +/);
+                      const commande = args.shift().toLowerCase();
+                      
+                      // Créer un objet commande adapté pour nekoScript
+                      const nekoCommande = {
+                        nom: commande,
+                        arguments: args,
+                        auteur: {
+                          nom: message.author.username,
+                          id: message.author.id
+                        },
+                        canal: {
+                          nom: message.channel.name,
+                          id: message.channel.id,
+                          envoyer: (texte) => message.channel.send(texte)
+                        },
+                        repondre: (texte) => message.reply(texte),
+                        reagir: (emoji) => message.react(emoji)
+                      };
+                      
+                      // Appeler la fonction utilisateur avec notre objet commande
+                      fn(nekoCommande);
+                    });
+                    
+                    console.log(`Commande Discord '${prefixe}' configurée (RÉEL)`);
+                    return `Bot Discord configuré avec le préfixe de commande '${prefixe}'`;
+                  },
+                  
+                  changerStatut: (message, type = "PLAYING") => {
+                    // Changer réellement le statut du bot
+                    const types = {
+                      "JOUE": "PLAYING",
+                      "REGARDE": "WATCHING",
+                      "ÉCOUTE": "LISTENING",
+                      "EN_STREAM": "STREAMING"
+                    };
+                    
+                    const activityType = types[type] || type;
+                    
+                    client.user?.setActivity(message, { type: Discord.ActivityType[activityType] });
+                    console.log(`Statut Discord changé: ${type} ${message} (RÉEL)`);
+                    return `Statut Discord du bot changé: ${type} ${message}`;
+                  },
+                  
+                  créerEmbed: (titre, description, couleur = "#5865F2") => {
+                    // Créer un embed Discord réel
+                    const embed = new Discord.EmbedBuilder()
+                      .setTitle(titre)
+                      .setDescription(description)
+                      .setColor(couleur);
+                    
+                    console.log(`Création d'un embed Discord: ${titre} (RÉEL)`);
+                    
+                    return {
+                      embed: embed,
+                      ajouterChamp: (nom, valeur, inline = false) => {
+                        embed.addFields({ name: nom, value: valeur, inline: inline });
+                        console.log(`Champ ajouté à l'embed: ${nom} (RÉEL)`);
+                        return embed;
+                      },
+                      définirAuteur: (nom, iconURL) => {
+                        embed.setAuthor({ name: nom, iconURL: iconURL });
+                        return embed;
+                      },
+                      définirImage: (url) => {
+                        embed.setImage(url);
+                        return embed;
+                      },
+                      définirCouleur: (couleur) => {
+                        embed.setColor(couleur);
+                        return embed;
+                      },
+                      définirTimestamp: () => {
+                        embed.setTimestamp();
+                        return embed;
+                      }
+                    };
+                  },
+                  
+                  démarrer: () => {
+                    // Connexion réelle à Discord
+                    client.login(token).catch(err => {
+                      console.error("Erreur de connexion Discord:", err);
+                      throw new Error(`Erreur de connexion Discord: ${err.message}`);
+                    });
+                    
+                    console.log("Bot Discord démarré (RÉEL)");
+                    return "Bot Discord démarré avec une connexion réelle à l'API Discord";
                   }
                 };
-              },
-              démarrer: () => {
-                console.log("Bot Discord démarré");
-                return "Bot Discord démarré";
+                
+                return bot;
+              } catch (error) {
+                console.error("Erreur lors de la création du bot Discord:", error);
+                throw new Error(`Erreur lors de la création du bot Discord: ${error.message}`);
               }
-            };
-            return bot;
-          }
-        });
+            }
+          });
+        } catch (error) {
+          console.error("Impossible de charger discord.js:", error);
+          throw new Error(`Pour utiliser Discord.neko, installez discord.js avec: npm install discord.js`);
+        }
       } else if (node.source === 'NekoJeu.neko') {
-        this.environment.set(node.name, {
-          Canvas: (width, height, title) => {
-            const canvas = {
-              créerSprite: (image, x, y) => {
-                return {
-                  nekBouger: (dx, dy) => `Sprite déplacé de (${dx}, ${dy})`
-                };
-              },
-              surTouche: (key, fn) => {
-                // Simulate key handler
-                return `Gestionnaire de touche configuré pour ${key}`;
-              },
-              afficherTexte: (texte, x, y, couleur = "white") => {
-                return `Texte affiché: ${texte} à (${x}, ${y})`;
-              },
-              surMiseAJour: (fn) => {
-                return "Gestionnaire de mise à jour configuré";
-              },
-              démarrer: () => "Jeu démarré"
-            };
-            return canvas;
+        try {
+          // Utiliser des bibliothèques réelles pour les jeux
+          let canvas;
+          try {
+            // Tenter de charger canvas pour le rendu
+            canvas = require('canvas');
+          } catch (error) {
+            console.warn("Module canvas non disponible. Installation requise pour NekoJeu réel.");
+            console.warn("npm install canvas");
           }
-        });
-      } else if (node.source === 'Web.neko') {
-        this.environment.set(node.name, {
-          Express: () => {
-            const app = {
-              utiliser: (middleware) => "Middleware ajouté",
-              route: (method, path, handler) => {
-                console.log(`Route ${method} ${path} configurée`);
-                return `Route ${method} ${path} configurée`;
-              },
-              écouter: (port, callback) => {
-                console.log(`Serveur Web démarré sur le port ${port}`);
-                if (callback) callback();
-                return `Serveur Web démarré sur le port ${port}`;
+          
+          this.environment.set(node.name, {
+            Canvas: (width, height, title) => {
+              // Si canvas est disponible, créer un canevas réel
+              let gameCanvas, ctx;
+              let realCanvas = false;
+              
+              if (canvas) {
+                gameCanvas = canvas.createCanvas(width, height);
+                ctx = gameCanvas.getContext('2d');
+                realCanvas = true;
+                console.log("Canvas réel créé avec canvas.js");
+              } else {
+                console.log("Utilisation du mode de simulation pour NekoJeu");
               }
-            };
-            return app;
-          },
-          Static: (directory) => {
-            return `Middleware statique pour ${directory}`;
-          }
-        });
+              
+              // Objets de jeu
+              const sprites = [];
+              const keyHandlers = {};
+              const keyStates = {};
+              let updateHandler = null;
+              let running = false;
+              
+              // Boucle de jeu
+              const gameLoop = () => {
+                if (!running) return;
+                
+                if (realCanvas) {
+                  ctx.clearRect(0, 0, width, height);
+                  
+                  // Mise à jour et dessin des sprites
+                  sprites.forEach(sprite => {
+                    if (sprite.update) sprite.update();
+                    ctx.drawImage(sprite.image, sprite.x, sprite.y, sprite.width, sprite.height);
+                  });
+                }
+                
+                // Appel du gestionnaire de mise à jour
+                if (updateHandler) updateHandler();
+                
+                // Continuer la boucle
+                if (typeof window !== 'undefined') {
+                  window.requestAnimationFrame(gameLoop);
+                } else {
+                  setTimeout(gameLoop, 1000 / 60); // ~60 FPS
+                }
+              };
+              
+              // Configurer les écouteurs de clavier si dans un navigateur
+              if (typeof window !== 'undefined') {
+                window.addEventListener('keydown', (event) => {
+                  keyStates[event.key] = true;
+                  if (keyHandlers[event.key]) keyHandlers[event.key](true);
+                });
+                
+                window.addEventListener('keyup', (event) => {
+                  keyStates[event.key] = false;
+                  if (keyHandlers[event.key]) keyHandlers[event.key](false);
+                });
+              }
+              
+              return {
+                créerSprite: async (image, x, y, width = 32, height = 32) => {
+                  let spriteImage;
+                  
+                  if (realCanvas) {
+                    try {
+                      // Charger l'image avec canvas
+                      spriteImage = await canvas.loadImage(image);
+                    } catch (error) {
+                      console.error(`Erreur de chargement d'image: ${image}`, error);
+                      // Image de remplacement (rectangle coloré)
+                      spriteImage = { width, height };
+                    }
+                  } else {
+                    // En mode simulation, utiliser un objet factice
+                    spriteImage = { width, height };
+                  }
+                  
+                  const sprite = {
+                    x, y, 
+                    width: width || spriteImage.width || 32, 
+                    height: height || spriteImage.height || 32,
+                    image: spriteImage,
+                    vitesseX: 0,
+                    vitesseY: 0,
+                    
+                    // Méthodes du sprite
+                    nekBouger: (dx, dy) => {
+                      sprite.x += dx;
+                      sprite.y += dy;
+                      return `Sprite déplacé de (${dx}, ${dy})`;
+                    },
+                    définirVitesse: (vx, vy) => {
+                      sprite.vitesseX = vx;
+                      sprite.vitesseY = vy;
+                    },
+                    collision: (autreSprite) => {
+                      // Vérification de collision simple par boîtes englobantes
+                      return !(
+                        sprite.x + sprite.width < autreSprite.x ||
+                        sprite.x > autreSprite.x + autreSprite.width ||
+                        sprite.y + sprite.height < autreSprite.y ||
+                        sprite.y > autreSprite.y + autreSprite.height
+                      );
+                    },
+                    update: () => {
+                      // Mettre à jour la position en fonction de la vitesse
+                      sprite.x += sprite.vitesseX;
+                      sprite.y += sprite.vitesseY;
+                    }
+                  };
+                  
+                  sprites.push(sprite);
+                  return sprite;
+                },
+                
+                surTouche: (key, fn) => {
+                  keyHandlers[key] = fn;
+                  console.log(`Gestionnaire de touche configuré pour ${key} (RÉEL si dans navigateur)`);
+                  return `Gestionnaire de touche configuré pour ${key}`;
+                },
+                
+                verifierTouche: (key) => {
+                  return keyStates[key] || false;
+                },
+                
+                afficherTexte: (texte, x, y, couleur = "white", taille = "16px") => {
+                  if (realCanvas) {
+                    ctx.fillStyle = couleur;
+                    ctx.font = `${taille} Arial`;
+                    ctx.fillText(texte, x, y);
+                  }
+                  console.log(`Texte affiché: ${texte} à (${x}, ${y})`);
+                  return `Texte affiché: ${texte} à (${x}, ${y})`;
+                },
+                
+                dessinerRectangle: (x, y, largeur, hauteur, couleur = "red") => {
+                  if (realCanvas) {
+                    ctx.fillStyle = couleur;
+                    ctx.fillRect(x, y, largeur, hauteur);
+                  }
+                  return `Rectangle dessiné à (${x}, ${y})`;
+                },
+                
+                surMiseAJour: (fn) => {
+                  updateHandler = fn;
+                  console.log("Gestionnaire de mise à jour configuré (RÉEL)");
+                  return "Gestionnaire de mise à jour configuré";
+                },
+                
+                démarrer: () => {
+                  running = true;
+                  gameLoop();
+                  console.log("Jeu démarré (RÉEL)");
+                  return "Jeu démarré";
+                },
+                
+                arrêter: () => {
+                  running = false;
+                  console.log("Jeu arrêté");
+                  return "Jeu arrêté";
+                }
+              };
+            }
+          });
+        } catch (error) {
+          console.error("Erreur lors de l'initialisation de NekoJeu:", error);
+          throw new Error(`Erreur d'initialisation de NekoJeu: ${error.message}`);
+        }
+      } else if (node.source === 'Web.neko') {
+        try {
+          // Utiliser Express réel pour les applications web
+          const express = require('express');
+          
+          this.environment.set(node.name, {
+            Express: () => {
+              try {
+                // Créer une application Express réelle
+                const app = express();
+                
+                // Configurer les middlewares de base
+                app.use(express.json());
+                app.use(express.urlencoded({ extended: true }));
+                
+                // Server HTTP
+                let server = null;
+                
+                return {
+                  utiliser: (middleware) => {
+                    if (typeof middleware === 'function') {
+                      app.use(middleware);
+                    } else if (typeof middleware === 'string') {
+                      // Si c'est un chemin vers un répertoire statique
+                      app.use(express.static(middleware));
+                    }
+                    console.log("Middleware ajouté (RÉEL)");
+                    return "Middleware ajouté";
+                  },
+                  
+                  route: (method, path, handler) => {
+                    // Normaliser la méthode HTTP
+                    method = method.toLowerCase();
+                    
+                    if (!app[method]) {
+                      throw new Error(`Méthode HTTP non supportée: ${method}`);
+                    }
+                    
+                    // Configurer la route avec Express
+                    app[method](path, (req, res) => {
+                      // Adapter req/res pour nekoScript
+                      const nekoReq = {
+                        corps: req.body,
+                        params: req.params,
+                        query: req.query,
+                        headers: req.headers,
+                        cookies: req.cookies,
+                        methode: req.method,
+                        chemin: req.path,
+                        url: req.url
+                      };
+                      
+                      const nekoRes = {
+                        envoyer: (data) => res.send(data),
+                        json: (data) => res.json(data),
+                        statut: (code) => {
+                          res.status(code);
+                          return nekoRes; // Pour chaîner les appels
+                        },
+                        rediriger: (url) => res.redirect(url),
+                        définirHeader: (nom, valeur) => {
+                          res.setHeader(nom, valeur);
+                          return nekoRes;
+                        },
+                        définirCookie: (nom, valeur, options) => {
+                          res.cookie(nom, valeur, options);
+                          return nekoRes;
+                        }
+                      };
+                      
+                      // Exécuter le gestionnaire nekoScript
+                      handler(nekoReq, nekoRes);
+                    });
+                    
+                    console.log(`Route ${method.toUpperCase()} ${path} configurée (RÉEL)`);
+                    return `Route ${method.toUpperCase()} ${path} configurée`;
+                  },
+                  
+                  écouter: (port, callback) => {
+                    // Démarrer le serveur HTTP réel
+                    server = app.listen(port, () => {
+                      console.log(`Serveur Web démarré sur le port ${port} (RÉEL)`);
+                      if (callback) callback();
+                    });
+                    
+                    return `Serveur Web démarré sur le port ${port}`;
+                  },
+                  
+                  arrêter: () => {
+                    if (server) {
+                      server.close();
+                      console.log("Serveur Web arrêté");
+                      return "Serveur Web arrêté";
+                    }
+                    return "Aucun serveur n'est en cours d'exécution";
+                  }
+                };
+              } catch (error) {
+                console.error("Erreur lors de la création du serveur Express:", error);
+                throw new Error(`Erreur de création du serveur Express: ${error.message}`);
+              }
+            },
+            
+            Static: (directory) => {
+              // Wrapper pour express.static
+              return express.static(directory);
+            }
+          });
+        } catch (error) {
+          console.error("Impossible de charger express:", error);
+          throw new Error(`Pour utiliser Web.neko, installez express avec: npm install express`);
+        }
       } else {
         // Try to load from package registry
         if (this.packageRegistry.has(node.source)) {
