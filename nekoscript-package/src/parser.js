@@ -1,6 +1,6 @@
 /**
- * Basic parser for nekoScript language
- * This is a simplified implementation to demonstrate the concept
+ * Enhanced parser for nekoScript language
+ * This is an implementation with better error handling and more features
  */
 
 "use strict";
@@ -12,18 +12,23 @@ class NekoParser {
   }
 
   parse(code) {
-    // Tokenize the code
+    // Tokenize code
     this.tokenize(code);
     this.current = 0;
 
-    // Parse the tokens into an AST
+    // Create program AST
     const program = {
       type: 'Program',
       body: []
     };
 
     while (!this.isAtEnd()) {
-      program.body.push(this.parseStatement());
+      try {
+        program.body.push(this.parseStatement());
+      } catch (error) {
+        console.error('Parsing error:', error);
+        break;
+      }
     }
 
     return program;
@@ -31,172 +36,210 @@ class NekoParser {
 
   tokenize(code) {
     this.tokens = [];
-    // Very basic tokenizer
-    // In a real implementation, this would be much more sophisticated
-
-    // Split by whitespace for simplicity
-    const lines = code.split('\n');
-    for (let line of lines) {
-      line = line.trim();
-      if (line.startsWith('//')) continue; // Skip comments
-
-      // Check for keywords
-      if (line.startsWith('nekModule')) {
-        this.tokens.push({ type: 'MODULE', value: 'nekModule' });
-        const name = line.match(/nekModule\s+(\w+)/)?.[1];
-        if (name) {
-          this.tokens.push({ type: 'IDENTIFIER', value: name });
-        }
-        if (line.includes('{')) {
-          this.tokens.push({ type: 'LBRACE', value: '{' });
-        }
-      } 
-      else if (line.startsWith('nekImporter')) {
-        this.tokens.push({ type: 'IMPORT', value: 'nekImporter' });
-        const name = line.match(/nekImporter\s+(\w+)/)?.[1];
-        if (name) {
-          this.tokens.push({ type: 'IDENTIFIER', value: name });
-        }
-        if (line.includes(';')) {
-          this.tokens.push({ type: 'SEMICOLON', value: ';' });
-        }
-      }
-      else if (line.startsWith('nekVariable')) {
-        this.tokens.push({ type: 'VARIABLE', value: 'nekVariable' });
-        const def = line.match(/nekVariable\s+(\w+)\s*=\s*(.+);/);
-        if (def) {
-          this.tokens.push({ type: 'IDENTIFIER', value: def[1] });
-          this.tokens.push({ type: 'ASSIGN', value: '=' });
-          this.tokens.push({ type: 'LITERAL', value: def[2] });
-          this.tokens.push({ type: 'SEMICOLON', value: ';' });
-        }
-      }
-      else if (line.startsWith('nekFonction')) {
-        this.tokens.push({ type: 'FUNCTION', value: 'nekFonction' });
-        const name = line.match(/nekFonction\s+(\w+)/)?.[1];
-        if (name) {
-          this.tokens.push({ type: 'IDENTIFIER', value: name });
-        }
-        if (line.includes('(')) {
-          this.tokens.push({ type: 'LPAREN', value: '(' });
-        }
-        if (line.includes(')')) {
-          this.tokens.push({ type: 'RPAREN', value: ')' });
-        }
-        if (line.includes('{')) {
-          this.tokens.push({ type: 'LBRACE', value: '{' });
-        }
-      }
-      else if (line.startsWith('nekSi')) {
-        this.tokens.push({ type: 'IF', value: 'nekSi' });
-        if (line.includes('(')) {
-          this.tokens.push({ type: 'LPAREN', value: '(' });
-        }
-        const condition = line.match(/nekSi\s*\((.+)\)/)?.[1];
-        if (condition) {
-          this.tokens.push({ type: 'EXPRESSION', value: condition });
-        }
-        if (line.includes(')')) {
-          this.tokens.push({ type: 'RPAREN', value: ')' });
-        }
-        if (line.includes('{')) {
-          this.tokens.push({ type: 'LBRACE', value: '{' });
-        }
-      }
-      else if (line.startsWith('nekRetourner')) {
-        this.tokens.push({ type: 'RETURN', value: 'nekRetourner' });
-        const value = line.match(/nekRetourner\s+(.+);/)?.[1];
-        if (value) {
-          this.tokens.push({ type: 'EXPRESSION', value });
-        }
-        if (line.includes(';')) {
-          this.tokens.push({ type: 'SEMICOLON', value: ';' });
-        }
-      }
-      else if (line.startsWith('nekAfficher')) {
-        this.tokens.push({ type: 'PRINT', value: 'nekAfficher' });
-        if (line.includes('(')) {
-          this.tokens.push({ type: 'LPAREN', value: '(' });
-        }
-        const arg = line.match(/nekAfficher\s*\((.+)\)/)?.[1];
-        if (arg) {
-          this.tokens.push({ type: 'EXPRESSION', value: arg });
-        }
-        if (line.includes(')')) {
-          this.tokens.push({ type: 'RPAREN', value: ')' });
-        }
-        if (line.includes(';')) {
-          this.tokens.push({ type: 'SEMICOLON', value: ';' });
-        }
-      }
-      else if (line === '}') {
-        this.tokens.push({ type: 'RBRACE', value: '}' });
-      }
-      else if (line) {
-        // Simple expression
-        this.tokens.push({ type: 'EXPRESSION', value: line });
-      }
+    
+    // Vérifier si c'est du JavaScript pur pour compatibilité
+    if (code.trim().startsWith('//') && code.includes('JavaScript')) {
+      this.tokens.push({ type: 'javascript', value: code });
+      this.tokens.push({ type: 'EOF', value: '' });
+      return;
     }
-
-    this.tokens.push({ type: 'EOF', value: 'EOF' });
+    
+    // Enhanced tokenizer with support for more nekoScript syntax
+    
+    const keywords = [
+      'nekVariable', 'nekFonction', 'nekSi', 'nekSinon', 'nekPour', 
+      'nekTantQue', 'nekRetourner', 'nekImporter', 'nekModule', 'nekNouveau',
+      'nekDepuis', 'importer', 'si', 'sinon', 'retourner', 'pour', 'tantque',
+      'require', 'function', 'class', 'const', 'let', 'var', 'export', 'import',
+      'nekExporter', 'nekRequire', 'nekRoute', 'nekServeur', 'nekBot', 'nekPackage'
+    ];
+    
+    let current = 0;
+    
+    while (current < code.length) {
+      let char = code[current];
+      
+      // Skip whitespace
+      if (/\s/.test(char)) {
+        current++;
+        continue;
+      }
+      
+      // Comments
+      if (char === '/' && code[current + 1] === '/') {
+        while (current < code.length && code[current] !== '\n') {
+          current++;
+        }
+        continue;
+      }
+      
+      // Identifiers and keywords
+      if (/[a-zA-Z_]/.test(char)) {
+        let value = '';
+        
+        while (current < code.length && /[a-zA-Z0-9_.]/.test(code[current])) {
+          value += code[current];
+          current++;
+        }
+        
+        // Check if it's a keyword
+        if (keywords.includes(value)) {
+          this.tokens.push({ type: 'keyword', value });
+        } else {
+          this.tokens.push({ type: 'identifier', value });
+        }
+        
+        continue;
+      }
+      
+      // Numbers
+      if (/[0-9]/.test(char)) {
+        let value = '';
+        
+        while (current < code.length && /[0-9.]/.test(code[current])) {
+          value += code[current];
+          current++;
+        }
+        
+        this.tokens.push({ type: 'number', value });
+        continue;
+      }
+      
+      // Strings
+      if (char === '"' || char === "'") {
+        const quote = char;
+        let value = '';
+        current++; // Skip opening quote
+        
+        while (current < code.length && code[current] !== quote) {
+          value += code[current];
+          current++;
+        }
+        
+        current++; // Skip closing quote
+        this.tokens.push({ type: 'string', value });
+        continue;
+      }
+      
+      // Operators and punctuation
+      if (/[=+\-*/%<>!&|^~?:.,;(){}[\]]/.test(char)) {
+        let value = char;
+        
+        // Check for two-character operators
+        const nextChar = code[current + 1];
+        if (
+          (char === '=' && nextChar === '=') ||
+          (char === '!' && nextChar === '=') ||
+          (char === '<' && nextChar === '=') ||
+          (char === '>' && nextChar === '=') ||
+          (char === '&' && nextChar === '&') ||
+          (char === '|' && nextChar === '|')
+        ) {
+          value += nextChar;
+          current++;
+        }
+        
+        this.tokens.push({ type: 'operator', value });
+        current++;
+        continue;
+      }
+      
+      // Unknown character - skip
+      current++;
+    }
+    
+    // Add EOF token
+    this.tokens.push({ type: 'EOF', value: '' });
   }
 
   parseStatement() {
-    if (this.check('MODULE')) {
-      return this.parseModuleDeclaration();
-    }
-    if (this.check('IMPORT')) {
-      return this.parseImportStatement();
-    }
-    if (this.check('VARIABLE')) {
-      return this.parseVariableDeclaration();
-    }
-    if (this.check('FUNCTION')) {
-      return this.parseFunctionDeclaration();
-    }
-    if (this.check('IF')) {
-      return this.parseIfStatement();
-    }
+    const token = this.peek();
     
-    // For any other token, assume it's an expression statement
-    return this.parseExpressionStatement();
+    switch (token.type) {
+      case 'keyword':
+        switch (token.value) {
+          case 'nekVariable':
+            return this.parseVariableDeclaration();
+          case 'nekFonction':
+            return this.parseFunctionDeclaration();
+          case 'nekSi':
+          case 'si':
+            return this.parseIfStatement();
+          case 'nekModule':
+            return this.parseModuleDeclaration();
+          case 'nekImporter':
+          case 'importer':
+            return this.parseImportStatement();
+          case 'retourner':
+          case 'nekRetourner':
+            return this.parseReturnStatement();
+          default:
+            this.advance(); // Skip unknown keyword
+            return {
+              type: 'UnknownStatement',
+              keyword: token.value
+            };
+        }
+      
+      case 'identifier':
+        return this.parseExpressionStatement();
+      
+      default:
+        this.advance(); // Skip unknown token
+        return {
+          type: 'UnknownStatement',
+          tokenType: token.type,
+          tokenValue: token.value
+        };
+    }
   }
 
   parseVariableDeclaration() {
-    this.consume('VARIABLE', "Expected 'nekVariable'");
-    const name = this.consume('IDENTIFIER', "Expected variable name").value;
-    this.consume('ASSIGN', "Expected '='");
-    const value = this.consume('LITERAL', "Expected variable value").value;
-    this.consume('SEMICOLON', "Expected ';'");
+    this.consume('keyword', 'nekVariable');
+    const name = this.consume('identifier', 'Expected variable name').value;
+    this.consume('operator', '=');
+    const initializer = this.parseExpression();
+    
+    // Rendre le point-virgule optionnel
+    if (this.check('operator') && this.peek().value === ';') {
+      this.advance(); // Consommer le point-virgule si présent
+    }
     
     return {
       type: 'VariableDeclaration',
       name,
-      value
+      initializer
     };
   }
 
   parseFunctionDeclaration() {
-    this.consume('FUNCTION', "Expected 'nekFonction'");
-    const name = this.consume('IDENTIFIER', "Expected function name").value;
-    this.consume('LPAREN', "Expected '('");
+    this.consume('keyword', 'nekFonction');
+    const name = this.consume('identifier', 'Expected function name').value;
     
-    // Parse parameters (simplified)
+    this.consume('operator', '(');
     const params = [];
-    if (!this.check('RPAREN')) {
-      // TODO: implement parameter parsing
+    
+    if (this.peek().value !== ')') {
+      do {
+        const param = this.consume('identifier', 'Expected parameter name').value;
+        params.push(param);
+        
+        if (this.peek().value !== ',') break;
+        this.advance(); // Skip comma
+      } while (true);
     }
     
-    this.consume('RPAREN', "Expected ')'");
-    this.consume('LBRACE', "Expected '{'");
+    this.consume('operator', ')');
     
-    // Parse function body (simplified)
+    // Parse function body
+    this.consume('operator', '{');
     const body = [];
-    while (!this.check('RBRACE') && !this.isAtEnd()) {
+    
+    while (this.peek().value !== '}' && !this.isAtEnd()) {
       body.push(this.parseStatement());
     }
     
-    this.consume('RBRACE', "Expected '}'");
+    this.consume('operator', '}');
     
     return {
       type: 'FunctionDeclaration',
@@ -207,39 +250,110 @@ class NekoParser {
   }
 
   parseIfStatement() {
-    this.consume('IF', "Expected 'nekSi'");
-    this.consume('LPAREN', "Expected '('");
-    const condition = this.consume('EXPRESSION', "Expected condition").value;
-    this.consume('RPAREN', "Expected ')'");
-    this.consume('LBRACE', "Expected '{'");
+    const keyword = this.peek().value;
+    this.advance(); // Skip 'nekSi' or 'si'
     
-    // Parse if body
-    const body = [];
-    while (!this.check('RBRACE') && !this.isAtEnd()) {
-      body.push(this.parseStatement());
+    let condition;
+    
+    // Gestion du cas où la condition est entre parenthèses
+    if (this.peek().value === '(') {
+      this.advance(); // Skip '('
+      condition = this.parseExpression();
+      
+      // Gérer le cas où il manque la parenthèse fermante
+      if (this.peek().value === ')') {
+        this.advance(); // Skip ')'
+      }
+    } else {
+      // Condition sans parenthèses (style pseudocode)
+      condition = this.parseExpression();
     }
     
-    this.consume('RBRACE', "Expected '}'");
+    // Bloc de code 'then'
+    let thenBranch = [];
+    
+    // Vérifier si le bloc commence par une accolade
+    if (this.peek().value === '{') {
+      this.advance(); // Skip '{'
+      
+      while (this.peek().value !== '}' && !this.isAtEnd()) {
+        thenBranch.push(this.parseStatement());
+      }
+      
+      // Gérer le cas où il manque l'accolade fermante
+      if (this.peek().value === '}') {
+        this.advance(); // Skip '}'
+      }
+    } else {
+      // Code sans accolades, un seul statement
+      thenBranch.push(this.parseStatement());
+    }
+    
+    // Bloc 'else' optionnel
+    let elseBranch = null;
+    
+    if (this.peek().value === 'nekSinon' || this.peek().value === 'sinon') {
+      this.advance(); // Skip 'nekSinon' or 'sinon'
+      
+      // Vérifier si le bloc else commence par une accolade
+      if (this.peek().value === '{') {
+        this.advance(); // Skip '{'
+        elseBranch = [];
+        
+        while (this.peek().value !== '}' && !this.isAtEnd()) {
+          elseBranch.push(this.parseStatement());
+        }
+        
+        // Gérer le cas où il manque l'accolade fermante
+        if (this.peek().value === '}') {
+          this.advance(); // Skip '}'
+        }
+      } else {
+        // Code sans accolades, un seul statement
+        elseBranch = [this.parseStatement()];
+      }
+    }
     
     return {
       type: 'IfStatement',
       condition,
-      body
+      thenBranch,
+      elseBranch
     };
   }
 
   parseModuleDeclaration() {
-    this.consume('MODULE', "Expected 'nekModule'");
-    const name = this.consume('IDENTIFIER', "Expected module name").value;
-    this.consume('LBRACE', "Expected '{'");
+    this.advance(); // Skip 'nekModule'
     
-    // Parse module body
-    const body = [];
-    while (!this.check('RBRACE') && !this.isAtEnd()) {
-      body.push(this.parseStatement());
+    let name = '';
+    if (this.peek().type === 'identifier') {
+      name = this.advance().value;
+    } else {
+      console.warn("Warning: Module name missing");
+      name = 'AnonymeModule';
     }
     
-    this.consume('RBRACE', "Expected '}'");
+    // Vérifier si le bloc commence par une accolade
+    const body = [];
+    
+    if (this.peek().value === '{') {
+      this.advance(); // Skip '{'
+      
+      while (this.peek().value !== '}' && !this.isAtEnd()) {
+        try {
+          body.push(this.parseStatement());
+        } catch (error) {
+          console.warn("Warning in module body parsing:", error);
+          // Skip problematic statement
+          this.advance();
+        }
+      }
+      
+      // Gérer le cas où il manque l'accolade fermante
+      if (this.peek().value === '}') {
+        this.advance(); // Skip '}'
+      }
+    }
     
     return {
       type: 'ModuleDeclaration',
@@ -249,62 +363,155 @@ class NekoParser {
   }
 
   parseImportStatement() {
-    this.consume('IMPORT', "Expected 'nekImporter'");
-    const moduleName = this.consume('IDENTIFIER', "Expected module name").value;
-    this.consume('SEMICOLON', "Expected ';'");
+    const keyword = this.peek().value;
+    this.advance(); // Skip 'nekImporter' or 'importer'
+    
+    // Handle different import syntax styles
+    if (keyword === 'importer') {
+      const name = this.consume('identifier', 'Expected import name').value;
+      // Rendre le point-virgule optionnel
+      if (this.check('operator') && this.peek().value === ';') {
+        this.advance(); // Consommer le point-virgule si présent
+      }
+      
+      return {
+        type: 'ImportStatement',
+        name,
+        source: null
+      };
+    } else {
+      const name = this.consume('identifier', 'Expected import name').value;
+      
+      let source = null;
+      
+      if (this.peek().value === 'nekDepuis') {
+        this.advance(); // Skip 'nekDepuis'
+        source = this.consume('string', 'Expected import source').value;
+      }
+      
+      // Rendre le point-virgule optionnel
+      if (this.check('operator') && this.peek().value === ';') {
+        this.advance(); // Consommer le point-virgule si présent
+      }
+      
+      return {
+        type: 'ImportStatement',
+        name,
+        source: name // Si source est null, utiliser le nom comme source
+      };
+    }
+  }
+  
+  parseReturnStatement() {
+    const keyword = this.peek().value;
+    this.advance(); // Skip 'retourner' or 'nekRetourner'
+    
+    const value = this.parseExpression();
+    
+    // Rendre le point-virgule optionnel
+    if (this.check('operator') && this.peek().value === ';') {
+      this.advance(); // Consommer le point-virgule si présent
+    }
     
     return {
-      type: 'ImportStatement',
-      moduleName
+      type: 'ReturnStatement',
+      value
     };
   }
 
   parseExpressionStatement() {
-    if (this.check('PRINT')) {
-      this.consume('PRINT', "Expected 'nekAfficher'");
-      this.consume('LPAREN', "Expected '('");
-      const expression = this.consume('EXPRESSION', "Expected expression").value;
-      this.consume('RPAREN', "Expected ')'");
-      if (this.check('SEMICOLON')) {
-        this.consume('SEMICOLON', "Expected ';'");
-      }
-      
-      return {
-        type: 'PrintStatement',
-        expression
-      };
-    }
+    const expr = this.parseExpression();
     
-    if (this.check('RETURN')) {
-      this.consume('RETURN', "Expected 'nekRetourner'");
-      const value = this.consume('EXPRESSION', "Expected expression").value;
-      this.consume('SEMICOLON', "Expected ';'");
-      
-      return {
-        type: 'ReturnStatement',
-        value
-      };
-    }
-    
-    const expression = this.consume('EXPRESSION', "Expected expression").value;
-    if (this.check('SEMICOLON')) {
-      this.consume('SEMICOLON', "Expected ';'");
+    // Rendre le point-virgule optionnel
+    if (this.check('operator') && this.peek().value === ';') {
+      this.advance(); // Consommer le point-virgule si présent
     }
     
     return {
       type: 'ExpressionStatement',
-      expression
+      expression: expr
     };
   }
 
   parseExpression() {
-    // Very simplified expression parsing
-    const value = this.consume('EXPRESSION', "Expected expression").value;
+    // Analyse d'expression améliorée
+    const token = this.peek();
     
-    return {
-      type: 'Expression',
-      value
-    };
+    if (token.type === 'string') {
+      this.advance();
+      return {
+        type: 'StringLiteral',
+        value: token.value
+      };
+    } else if (token.type === 'number') {
+      this.advance();
+      return {
+        type: 'NumberLiteral',
+        value: parseFloat(token.value)
+      };
+    } else if (token.type === 'identifier') {
+      this.advance();
+      
+      // Vérifier les expressions composées comme "obj.methode"
+      let identifier = token.value;
+      
+      // Gestion des appels de méthodes (obj.method)
+      while (this.peek().value === '.') {
+        this.advance(); // Skip '.'
+        
+        if (this.peek().type === 'identifier') {
+          identifier += '.' + this.advance().value;
+        } else {
+          break;
+        }
+      }
+      
+      // Vérifier si c'est un appel de fonction/méthode
+      if (this.peek().value === '(') {
+        this.advance(); // Skip '('
+        
+        const args = [];
+        
+        if (this.peek().value !== ')') {
+          do {
+            // Permettre les expressions vides (comme dans obj.method(,))
+            if (this.peek().value === ',') {
+              this.advance(); // Skip la virgule
+              continue;
+            }
+            
+            args.push(this.parseExpression());
+            
+            if (this.peek().value !== ',') break;
+            this.advance(); // Skip comma
+          } while (true);
+        }
+        
+        // Être plus permissif avec la parenthèse fermante
+        if (this.peek().value === ')') {
+          this.advance(); // Skip ')'
+        }
+        
+        return {
+          type: 'CallExpression',
+          callee: identifier,
+          arguments: args
+        };
+      }
+      
+      // Simple identifier
+      return {
+        type: 'Identifier',
+        name: identifier
+      };
+    } else {
+      this.advance(); // Skip unknown token in expression
+      return {
+        type: 'UnknownExpression',
+        tokenType: token.type,
+        tokenValue: token.value
+      };
+    }
   }
 
   consume(type, message) {
@@ -312,7 +519,7 @@ class NekoParser {
       return this.advance();
     }
     
-    throw new Error(`Parse error: ${message}, found ${this.peek().type}`);
+    throw new Error(message);
   }
 
   check(type) {
@@ -338,4 +545,7 @@ class NekoParser {
   }
 }
 
-module.exports = { NekoParser };
+// Créer une instance par défaut
+const nekoParser = new NekoParser();
+
+module.exports = { NekoParser, nekoParser };
