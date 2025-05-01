@@ -1,0 +1,15 @@
+// Script de démonstration simplifié
+nekVariable message = "Hello nekoScript!"
+nekAfficher(message)
+
+// Tester l'instruction conditionnelle
+si (1 + 1 === 2) {
+  nekAfficher("Les maths fonctionnent correctement")
+}
+
+// Tester l'importation basique
+nekImporter NekoUtils
+
+// Utiliser directement les fonctions sans accéder par le module
+nekVariable texte = "bienvenue dans nekoscript"
+nekAfficher(nekCapitaliser(texte))

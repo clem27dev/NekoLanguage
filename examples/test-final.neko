@@ -1,0 +1,32 @@
+// Script de test final pour vérifier la fonctionnalité de base
+
+// Déclaration de variables
+nekVariable message = "Bonjour nekoScript!"
+nekVariable nombre = 42
+
+// Affichage simple
+nekAfficher(message)
+nekAfficher("La valeur est: " + nombre)
+
+// Test de condition simple
+si (10 > 5) {
+  nekAfficher("Les maths fonctionnent!")
+}
+
+// Définition et appel de fonction
+nekFonction additionner(a, b) {
+  retourner a + b
+}
+
+nekVariable resultat = additionner(10, 32)
+nekAfficher("10 + 32 = " + resultat)
+
+// Test de condition avec else
+si (resultat > 50) {
+  nekAfficher("Le résultat est supérieur à 50")
+} sinon {
+  nekAfficher("Le résultat est inférieur ou égal à 50")
+}
+
+// Terminé
+nekAfficher("Le script nekoScript a bien été exécuté!")

@@ -1,0 +1,44 @@
+// Script basique qui démontre les fonctionnalités de base de nekoScript
+
+// Déclaration de variables
+nekVariable message = "Bonjour, mon script nekoScript fonctionne!"
+nekVariable nombre = 42
+nekVariable vrai = true
+nekVariable faux = false
+
+// Affichages
+nekAfficher(message)
+nekAfficher("La valeur de nombre est: " + nombre)
+
+// Opérations mathématiques
+nekVariable somme = 10 + 15
+nekAfficher("10 + 15 = " + somme)
+
+// Conditions
+si (somme > 20) {
+  nekAfficher("La somme est supérieure à 20")
+} sinon {
+  nekAfficher("La somme est inférieure ou égale à 20")
+}
+
+// Boucle simulée (nous n'avons pas encore implémenté les boucles)
+nekVariable i = 0
+si (i < 3) {
+  nekAfficher("Premier passage: i = " + i)
+  i = i + 1
+}
+si (i < 3) {
+  nekAfficher("Deuxième passage: i = " + i)
+  i = i + 1
+}
+si (i < 3) {
+  nekAfficher("Troisième passage: i = " + i)
+  i = i + 1
+}
+
+// Fonction personnalisée
+nekFonction saluer(nom) {
+  retourner "Bonjour, " + nom + "!"
+}
+
+nekAfficher(saluer("Utilisateur de nekoScript"))

@@ -1,0 +1,36 @@
+// Exemple de script nekoScript utilisant les packages
+nekImporter NekoUtils
+nekImporter NekoAnimation
+
+// Variables pour tester les fonctions du package NekoUtils
+nekVariable texte = "bonjour le monde"
+nekVariable texteTronque = "Un texte très long qui devrait être tronqué"
+nekVariable nombre1 = 5
+nekVariable nombre2 = 7
+
+// Utilisation des fonctions du package NekoUtils
+nekAfficher("Version du package NekoUtils: " + NekoUtils.VERSION)
+nekAfficher("Texte capitalisé: " + NekoUtils.capitaliser(texte))
+nekAfficher("Texte tronqué: " + NekoUtils.tronquer(texteTronque, 15, "..."))
+nekAfficher("Somme de " + nombre1 + " et " + nombre2 + ": " + NekoUtils.somme(nombre1, nombre2))
+nekAfficher("Nombre aléatoire entre 1 et 10: " + NekoUtils.aleatoireEntier(1, 10))
+
+// Utilisation du package NekoAnimation
+nekVariable animation = new NekoAnimation()
+nekVariable element = { style: {} }
+
+// Créer une animation de fondu
+animation.creerAnimation("monFondu", 1000, [
+  { opacity: 0 },
+  { opacity: 1 }
+])
+
+// Jouer l'animation
+animation.jouerAnimation("monFondu", element)
+
+// Utiliser d'autres méthodes d'animation
+animation.fondu(element, { duree: 500, debut: 0, fin: 1 })
+animation.deplacer(element, { x: 100, y: 50, duree: 1000 })
+animation.rebond(element, { hauteur: 50, duree: 800 })
+
+nekAfficher("Animation terminée!")
