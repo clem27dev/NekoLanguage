@@ -1,0 +1,25 @@
+// Module d'utilitaires simple pour nekoScript
+nekModule NekoUtils {
+  // Fonctions de texte
+  nekFonction capitaliser(texte) {
+    retourner texte.charAt(0).toUpperCase() + texte.slice(1).toLowerCase();
+  }
+  
+  nekFonction tronquer(texte, longueur, suffixe) {
+    si (!texte) retourner "";
+    si (texte.length <= longueur) retourner texte;
+    retourner texte.slice(0, longueur) + suffixe;
+  }
+  
+  // Fonctions mathématiques
+  nekFonction somme(a, b) {
+    retourner a + b;
+  }
+  
+  nekFonction aleatoireEntier(min, max) {
+    retourner Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  
+  // Version de la bibliothèque
+  nekVariable VERSION = "1.0.0";
+}

@@ -19,13 +19,14 @@ nekModule NekoUtils {
   
   // Fonctions de validation
   nekFonction estEmail(texte) {
-    nekVariable regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    retourner regex.test(texte);
+    // Vérification simple sans regex
+    retourner texte.includes("@") && texte.includes(".");
   }
   
   nekFonction estTelephone(texte) {
-    nekVariable regex = /^(\+\d{1,3})?[\s.-]?\(?\d{1,4}\)?[\s.-]?\d{1,4}[\s.-]?\d{1,9}$/;
-    retourner regex.test(texte);
+    // Vérification simple sans regex
+    nekVariable digits = texte.replace(/\D/g, "");
+    retourner digits.length >= 8 && digits.length <= 15;
   }
   
   // Fonctions de transformation de texte

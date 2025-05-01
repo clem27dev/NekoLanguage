@@ -257,32 +257,65 @@ export class NekoParser {
     const keyword = this.peek().value;
     this.advance(); // Skip 'nekSi' or 'si'
     
-    this.consume('operator', '(');
-    const condition = this.parseExpression();
-    this.consume('operator', ')');
+    let condition;
     
-    this.consume('operator', '{');
-    const thenBranch = [];
+    // Gestion du cas où la condition est entre parenthèses
+    if (this.peek().value === '(') {
+      this.advance(); // Skip '('
+      condition = this.parseExpression();
+      
+      // Gérer le cas où il manque la parenthèse fermante
+      if (this.peek().value === ')') {
+        this.advance(); // Skip ')'
+      }
+    } else {
+      // Condition sans parenthèses (style pseudocode)
+      condition = this.parseExpression();
+    }
     
-    while (this.peek().value !== '}' && !this.isAtEnd()) {
+    // Bloc de code 'then'
+    let thenBranch = [];
+    
+    // Vérifier si le bloc commence par une accolade
+    if (this.peek().value === '{') {
+      this.advance(); // Skip '{'
+      
+      while (this.peek().value !== '}' && !this.isAtEnd()) {
+        thenBranch.push(this.parseStatement());
+      }
+      
+      // Gérer le cas où il manque l'accolade fermante
+      if (this.peek().value === '}') {
+        this.advance(); // Skip '}'
+      }
+    } else {
+      // Code sans accolades, un seul statement
       thenBranch.push(this.parseStatement());
     }
     
-    this.consume('operator', '}');
-    
+    // Bloc 'else' optionnel
     let elseBranch = null;
     
     if (this.peek().value === 'nekSinon' || this.peek().value === 'sinon') {
       this.advance(); // Skip 'nekSinon' or 'sinon'
       
-      this.consume('operator', '{');
-      elseBranch = [];
-      
-      while (this.peek().value !== '}' && !this.isAtEnd()) {
-        elseBranch.push(this.parseStatement());
+      // Vérifier si le bloc else commence par une accolade
+      if (this.peek().value === '{') {
+        this.advance(); // Skip '{'
+        elseBranch = [];
+        
+        while (this.peek().value !== '}' && !this.isAtEnd()) {
+          elseBranch.push(this.parseStatement());
+        }
+        
+        // Gérer le cas où il manque l'accolade fermante
+        if (this.peek().value === '}') {
+          this.advance(); // Skip '}'
+        }
+      } else {
+        // Code sans accolades, un seul statement
+        elseBranch = [this.parseStatement()];
       }
-      
-      this.consume('operator', '}');
     }
     
     return {
@@ -294,17 +327,37 @@ export class NekoParser {
   }
 
   private parseModuleDeclaration(): NekoAST {
-    this.consume('keyword', 'nekModule');
-    const name = this.consume('identifier', 'Expected module name').value;
+    this.advance(); // Skip 'nekModule'
     
-    this.consume('operator', '{');
-    const body = [];
-    
-    while (this.peek().value !== '}' && !this.isAtEnd()) {
-      body.push(this.parseStatement());
+    let name = '';
+    if (this.peek().type === 'identifier') {
+      name = this.advance().value;
+    } else {
+      console.warn("Warning: Module name missing");
+      name = 'AnonymeModule';
     }
     
-    this.consume('operator', '}');
+    // Vérifier si le bloc commence par une accolade
+    const body = [];
+    
+    if (this.peek().value === '{') {
+      this.advance(); // Skip '{'
+      
+      while (this.peek().value !== '}' && !this.isAtEnd()) {
+        try {
+          body.push(this.parseStatement());
+        } catch (error) {
+          console.warn("Warning in module body parsing:", error);
+          // Skip problematic statement
+          this.advance();
+        }
+      }
+      
+      // Gérer le cas où il manque l'accolade fermante
+      if (this.peek().value === '}') {
+        this.advance(); // Skip '}'
+      }
+    }
     
     return {
       type: 'ModuleDeclaration',
