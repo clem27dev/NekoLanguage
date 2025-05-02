@@ -553,26 +553,8 @@ nekModule ${moduleName} {
         console.log(chalk.yellow(`Pour l'exécuter en mode persistant, utilisez: neko-script démarrer ${fileName}`));
       }
       
-      // Simuler l'exécution sans essayer d'importer des modules externes
-      console.log(chalk.cyan('🚀 Simulation d\'exécution...'));
-      
-      // Extraction du nom du module
-      const moduleMatch = content.match(/nekModule\s+(\w+)/);
-      const moduleName = moduleMatch ? moduleMatch[1] : path.basename(fileName, '.neko');
-      
-      // Extraction des fonctions
-      const fonctionsMatch = content.match(/nekFonction\s+(\w+)/g) || [];
-      let fonctions = fonctionsMatch.map(f => f.replace('nekFonction ', ''));
-      
-      // Déterminer des fonctionnalités spéciales
-      return chalk.green(`✅ Simulation d'exécution du module ${moduleName}:`) +
-        chalk.cyan(`\n-----------------------------------\n`) +
-        chalk.cyan(`📦 Module: ${moduleName}\n`) +
-        chalk.cyan(`🔧 Fonctions détectées: ${fonctions.length > 0 ? fonctions.join(', ') : 'aucune'}\n`) +
-        chalk.cyan(`🧩 Type: ${isDiscordBot ? 'Bot Discord' : isWebApp ? 'Application Web' : isGame ? 'Jeu' : 'Script'}\n`) +
-        chalk.cyan(`\n🚀 Exécution...\n`) +
-        chalk.green(`✅ Code exécuté avec succès!\n`) +
-        chalk.cyan(`-----------------------------------`);
+      // Exécuter le code réellement
+      return await this.executeCode(content);
     } catch (error) {
       return chalk.red(`❌ Erreur lors de l'exécution du fichier: ${error.message}`);
     }
@@ -635,10 +617,10 @@ nekModule ${moduleName} {
   }
 
   /**
-   * Simule l'exécution de code nekoScript
-   * @param {string} code Code à simuler
+   * Exécute réellement le code nekoScript
+   * @param {string} code Code à exécuter
    */
-  async simulateExecution(code) {
+  async executeCode(code) {
     try {
       // Déterminer le type d'application en examinant le code
       const isDiscordBot = code.includes('nekImporter Discord') || code.includes('Discord.Bot');
@@ -657,16 +639,37 @@ nekModule ${moduleName} {
         console.log(chalk.yellow(`Pour l'exécuter en mode persistant, utilisez: neko-script démarrer <fichier>`));
       }
       
-      // Construire une version simplifiée du code pour simuler l'exécution
-      // Cette approche évitera les problèmes potentiels d'importation de modules
+      // Extraction des informations
       const moduleMatch = code.match(/nekModule\s+(\w+)/);
       const moduleName = moduleMatch ? moduleMatch[1] : "Programme";
       
-      // Exécuter le script en simulation
-      return chalk.green(`✅ Simulation d'exécution de ${moduleName}:`) + 
-             chalk.cyan(`\n-----------------------------------\n🐱 Module ${moduleName} démarré avec succès!\n`) +
-             chalk.cyan(`\nFonctions détectées: ${code.match(/nekFonction\s+(\w+)/g)?.length || 0}\n`) +
-             chalk.cyan(`Type d'application: ${appType}\n-----------------------------------`);
+      console.log(chalk.cyan(`🚀 Exécution réelle du module ${moduleName}...`));
+      
+      // Créer une nouvelle instance de l'interpréteur
+      const { NekoInterpreter } = require('../interpreter');
+      const interpreter = new NekoInterpreter();
+      
+      try {
+        // Exécution réelle du code
+        console.log(chalk.yellow('🔍 Analyse du code...'));
+        const result = await interpreter.execute(code, {
+          verbose: true,
+          realExecution: true,
+          debugInfo: true
+        });
+        
+        console.log(chalk.green('✅ Code exécuté avec succès!'));
+        
+        return chalk.green(`✅ Exécution réussie du module ${moduleName}:`) + 
+               chalk.cyan(`\n-----------------------------------\n`) +
+               chalk.cyan(`📦 Module: ${moduleName}\n`) +
+               chalk.cyan(`🧩 Type: ${appType}\n`) +
+               chalk.cyan(`📊 Résultat: ${result || 'Aucun retour'}\n`) +
+               chalk.cyan(`-----------------------------------`);
+      } catch (execError) {
+        console.error(chalk.red(`❌ Erreur d'exécution: ${execError.message}`));
+        throw execError;
+      }
     } catch (error) {
       return chalk.red(`❌ Erreur lors de l'exécution du code: ${error.message}`);
     }
@@ -725,16 +728,28 @@ nekModule ${moduleName} {
       }
       
       // Créer une nouvelle instance d'interpréteur pour cette exécution
-      console.log(chalk.cyan(`🚀 Démarrage de l'application ${moduleName}...`));
+      console.log(chalk.cyan(`🚀 Démarrage réel de l'application ${moduleName}...`));
       
       try {
         // Générer un ID pour cette application
         const processId = Date.now() % 10000;
         
-        // Simuler un lancement d'application au lieu d'essayer une vraie exécution
-        // qui pourrait échouer à cause de dépendances manquantes
+        // Créer une nouvelle instance de l'interpréteur
+        const { NekoInterpreter } = require('../interpreter');
+        const interpreter = new NekoInterpreter();
         
-        return chalk.green(`✅ Application ${moduleName} démarrée avec succès!`) + "\n" + chalk.cyan(`
+        console.log(chalk.yellow('⏳ Initialisation de l\'application...'));
+        
+        // Exécution réelle du code - on utilise await pour s'assurer que l'initialisation est terminée
+        await interpreter.execute(content, {
+          verbose: true,
+          realExecution: true,
+          debugInfo: true
+        });
+        
+        console.log(chalk.green('✅ Application démarrée avec succès!'));
+        
+        return chalk.green(`✅ Application ${moduleName} démarrée et active!`) + "\n" + chalk.cyan(`
 📊 Informations:
 - ID du processus: ${processId}
 - Type d'application: ${appType}

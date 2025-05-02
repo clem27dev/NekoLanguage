@@ -1,73 +1,79 @@
-// Exemple réel de bot Discord avec nekoScript
-// Pour utiliser ce script, installez discord.js: npm install discord.js
-// Puis remplacez VOTRE_TOKEN par un token Discord valide
-
-// Import du module Discord.js (exécution réelle)
-nekImporter Discord
-
-// Configuration du bot
-nekVariable token = "VOTRE_TOKEN" // À remplacer par un vrai token
-nekVariable prefixe = "!"
-
-// Création du bot Discord
-nekVariable bot = Discord.Bot(token)
-
-// Gestionnaire de commande !ping
-bot.surCommande(prefixe, (commande) => {
-  // Vérifier quelle commande a été appelée
-  si (commande.nom === "ping") {
-    commande.repondre("Pong! 🏓")
-    nekAfficher("Commande ping utilisée par " + commande.auteur.nom)
-  }
+// bot-discord-reel.neko - Un bot Discord créé avec nekoScript
+nekModule BotDiscord {
+  // Importer les packages nécessaires
+  nekImporter Base;
+  nekImporter Discord;
   
-  // Commande d'aide
-  si (commande.nom === "aide") {
-    commande.repondre("**Commandes disponibles:**\n" +
-                     "!ping - Vérifier si le bot répond\n" +
-                     "!aide - Afficher cette aide\n" +
-                     "!info - Afficher des informations sur le bot\n" +
-                     "!salut - Le bot vous salue personnellement")
-  }
+  // Configuration du bot
+  nekVariable TOKEN = "VOTRE_TOKEN_DISCORD"; // Remplacer par votre token Discord
+  nekVariable PREFIX = "!";
   
-  // Commande d'info
-  si (commande.nom === "info") {
-    // Utilisation d'embeds Discord
-    nekVariable embed = bot.créerEmbed(
-      "Bot nekoScript",
-      "Ce bot a été créé avec le langage nekoScript! 🐱",
-      "#9B59B6"
-    )
+  // Fonction principale pour le démarrage du bot
+  nekFonction nekPrincipal() {
+    nekAfficher("Démarrage du bot Discord...");
     
-    // Ajouter des champs à l'embed
-    embed.ajouterChamp("Langage", "nekoScript", true)
-    embed.ajouterChamp("Préfixe", prefixe, true)
-    embed.ajouterChamp("Version", "1.1.0", true)
-    embed.définirTimestamp()
+    // Création d'un nouveau client Discord
+    nekVariable bot = Discord.créerBot(TOKEN);
     
-    // Envoyer l'embed
-    commande.canal.envoyer({ embeds: [embed.embed] })
+    // Configuration des événements
+    bot.surConnexion(() => {
+      nekAfficher("Bot connecté avec succès!");
+      nekAfficher("Nom du bot: " + bot.nom);
+      nekAfficher("ID du bot: " + bot.id);
+    });
+    
+    // Gestion des messages reçus
+    bot.surMessage(message => {
+      // Ignorer les messages du bot lui-même
+      si (message.auteur.estBot) {
+        nekRetourner;
+      }
+      
+      // Vérifier si le message commence par le préfixe
+      si (message.contenu.commenceAvec(PREFIX)) {
+        // Extraire la commande et les arguments
+        nekVariable args = message.contenu.substring(PREFIX.longueur).split(" ");
+        nekVariable commande = args[0].toLowerCase();
+        args.shift(); // Retirer la commande des arguments
+        
+        // Commandes disponibles
+        si (commande === "ping") {
+          message.répondre("Pong! 🏓 Latence: " + bot.latence + "ms");
+        }
+        sinonSi (commande === "info") {
+          message.répondre("Je suis un vrai bot Discord créé avec nekoScript! 🐱");
+        }
+        sinonSi (commande === "aide") {
+          message.répondre(`
+**Commandes disponibles:**
+- ${PREFIX}ping - Vérifier la latence du bot
+- ${PREFIX}info - Informations sur le bot
+- ${PREFIX}aide - Afficher cette aide
+- ${PREFIX}salut - Dire bonjour
+- ${PREFIX}météo [ville] - Afficher la météo (simulation)
+          `);
+        }
+        sinonSi (commande === "salut") {
+          message.répondre("Bonjour " + message.auteur.nom + "! 👋");
+        }
+        sinonSi (commande === "météo") {
+          nekVariable ville = args.join(" ") || "Paris";
+          nekVariable météos = ["☀️ Ensoleillé", "🌧️ Pluvieux", "⛅ Nuageux", "❄️ Neigeux", "🌪️ Orageux"];
+          nekVariable températures = Math.floor(Math.random() * 30) + 5; // Entre 5°C et 35°C
+          nekVariable météoIndex = Math.floor(Math.random() * météos.length);
+          
+          message.répondre(`
+**Météo pour ${ville}:**
+Temps: ${météos[météoIndex]}
+Température: ${températures}°C
+          `);
+        }
+      }
+    });
+    
+    // Démarrer le bot
+    bot.démarrer();
+    
+    nekRetourner "Bot démarré avec succès";
   }
-  
-  // Commande salut avec argument
-  si (commande.nom === "salut") {
-    nekVariable nom = commande.arguments[0] || commande.auteur.nom
-    commande.repondre("Bonjour " + nom + "! 👋")
-  }
-})
-
-// Gestionnaire de messages
-bot.surMessage((message) => {
-  // Répondre à des messages spécifiques
-  si (message.contenu contient "bonjour") {
-    message.reagir("👋")
-  }
-  
-  si (message.contenu contient "nekoScript") {
-    message.repondre("Quelqu'un a mentionné mon langage préféré! 🐱")
-  }
-})
-
-// Connexion réelle à Discord
-nekAfficher("Démarrage du bot Discord...")
-bot.démarrer()
-nekAfficher("Le bot est maintenant en ligne! Utilisez " + prefixe + "aide pour voir les commandes disponibles.")
+}
