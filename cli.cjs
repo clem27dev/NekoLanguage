@@ -5,12 +5,8 @@
  * Interface en ligne de commande pour exécuter les commandes nekoScript
  */
 
-import fs from 'fs';
-import path from 'path';
-import { createRequire } from 'module';
-
-// Utiliser createRequire pour importer des modules CommonJS
-const require = createRequire(import.meta.url);
+const fs = require('fs');
+const path = require('path');
 const { NekoCommand } = require('./nekoscript-package/src/cli/command');
 
 // Fonction principale
