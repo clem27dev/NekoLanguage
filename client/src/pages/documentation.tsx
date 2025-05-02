@@ -190,7 +190,7 @@ const DocumentationPage: React.FC = () => {
               <TabsContent value="cli">
                 <h2 className="font-poppins font-semibold text-2xl mb-4">Commandes CLI</h2>
                 <p className="text-gray-600 mb-6">
-                  La CLI (Command Line Interface) de nekoScript vous permet d'installer, d'exécuter et de publier des bibliothèques.
+                  La CLI (Command Line Interface) de nekoScript vous permet d'installer, d'exécuter, de gérer des applications persistantes et de publier des bibliothèques.
                 </p>
                 
                 <div className="space-y-6">
@@ -205,6 +205,30 @@ const DocumentationPage: React.FC = () => {
                     <h3 className="font-poppins font-semibold text-xl mb-2">Exécuter un programme</h3>
                     <Terminal>
                       <TerminalLine prompt>neko-script exécuter mon-programme.neko</TerminalLine>
+                    </Terminal>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-poppins font-semibold text-xl mb-2">Démarrer en mode persistant</h3>
+                    <Terminal>
+                      <TerminalLine prompt>neko-script démarrer mon-programme.neko</TerminalLine>
+                    </Terminal>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-poppins font-semibold text-xl mb-2">Arrêter une application en cours</h3>
+                    <Terminal>
+                      <TerminalLine prompt>neko-script arrêter 1</TerminalLine>
+                      <TerminalLine success>✓ Application arrêtée avec succès</TerminalLine>
+                    </Terminal>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-poppins font-semibold text-xl mb-2">Lister les processus actifs</h3>
+                    <Terminal>
+                      <TerminalLine prompt>neko-script processus</TerminalLine>
+                      <TerminalLine>ID: 1 | Nom: mon-jeu | Type: jeu | Démarré: il y a 2 minutes</TerminalLine>
+                      <TerminalLine>ID: 2 | Nom: mon-bot | Type: bot | Démarré: il y a 5 minutes</TerminalLine>
                     </Terminal>
                   </div>
                   
