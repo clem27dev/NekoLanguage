@@ -114,7 +114,7 @@ const PlaygroundPage: React.FC = () => {
                     Tous les mots-clés et fonctions commencent par le préfixe "nek".
                   </p>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <h3 className="font-medium mb-2">Fonctions principales</h3>
                       <ul className="list-disc list-inside text-sm space-y-1 text-gray-600">
@@ -133,6 +133,16 @@ const PlaygroundPage: React.FC = () => {
                         <li><code className="text-neko-primary font-code">nekTantQue (condition) {"{...}"}</code> - Boucle while</li>
                       </ul>
                     </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-medium mb-2">Commandes CLI</h3>
+                    <ul className="list-disc list-inside text-sm space-y-1 text-gray-600">
+                      <li><code className="text-neko-primary font-code">neko-script exécuter fichier.neko</code> - Exécute un fichier</li>
+                      <li><code className="text-neko-primary font-code">neko-script démarrer fichier.neko</code> - Démarre en mode persistant</li>
+                      <li><code className="text-neko-primary font-code">neko-script processus</code> - Liste les applications actives</li>
+                      <li><code className="text-neko-primary font-code">neko-script arrêter id</code> - Arrête une application</li>
+                    </ul>
                   </div>
                 </div>
               </div>
