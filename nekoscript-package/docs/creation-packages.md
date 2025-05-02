@@ -1,195 +1,273 @@
-# Guide de création de packages nekoScript
+# Création de Packages nekoScript
 
-Ce guide explique comment créer, publier et utiliser vos propres packages nekoScript.
+Ce document explique comment créer et publier vos propres packages pour nekoScript. Les packages permettent de partager du code réutilisable avec d'autres développeurs.
 
-## Qu'est-ce qu'un package nekoScript?
+## Table des matières
 
-Un package nekoScript est un ensemble de fonctions et de variables réutilisables que vous pouvez importer dans vos projets nekoScript. Les packages permettent de partager du code et des fonctionnalités entre différents projets.
+1. [Introduction](#introduction)
+2. [Anatomie d'un package](#anatomie-dun-package)
+3. [Création d'un package](#création-dun-package)
+4. [Publication d'un package](#publication-dun-package)
+5. [Utilisation des packages](#utilisation-des-packages)
+6. [Packages JavaScript vs nekoScript](#packages-javascript-vs-nekoscript)
+7. [Bonnes pratiques](#bonnes-pratiques)
+8. [Exemples](#exemples)
 
-## Structure d'un package
+## Introduction
 
-Un package nekoScript suit une structure spécifique:
+Les packages nekoScript permettent aux développeurs de partager des fonctionnalités réutilisables. Vous pouvez créer des packages pour:
 
-```
-// Définition du module
-nekModule NomDuPackage {
-  // Variables et fonctions du module
-  nekVariable version = "1.0.0";
-  
-  nekFonction maFonction(param1, param2) {
-    // Code de la fonction
-    retourner "Résultat";
-  }
-  
-  // Fonctions internes (non exportées)
-  nekFonction _fonctionInterne() {
-    // Les fonctions commençant par _ sont considérées comme privées
-  }
-}
+- Des fonctions utilitaires (mathématiques, manipulation de chaînes, etc.)
+- Des composants d'interface utilisateur pour applications web
+- Des modules pour la création de bots Discord
+- Des bibliothèques pour le développement de jeux
+- Et bien plus encore!
 
-// Configuration des exports
-nekExporter NomDuPackage {
-  // Liste des éléments à exporter
-  version,
-  maFonction
-  // _fonctionInterne n'est pas exportée
-}
-```
+## Anatomie d'un package
 
-## Créer un package avec le CLI
+Un package nekoScript est composé de:
 
-Le moyen le plus simple de créer un package est d'utiliser la commande CLI:
+- Un module principal qui exporte des fonctions et des classes
+- Des dépendances (autres packages nécessaires)
+- Des métadonnées (nom, version, description, etc.)
+
+## Création d'un package
+
+### 1. Créer un fichier .neko
+
+Commencez par créer un fichier avec l'extension `.neko`:
 
 ```bash
-neko-script créer-package MonPackage
+neko-script create mon-package.neko
 ```
 
-Cette commande crée un dossier `MonPackage` avec:
-- `MonPackage.neko`: fichier principal du package
-- `README.md`: documentation du package
-- `exemples/`: dossier contenant des exemples d'utilisation
+### 2. Définir un module
 
-## Structure du fichier principal
-
-Le fichier principal de votre package doit contenir:
-
-1. Un module avec le même nom que votre package
-2. Les fonctions et variables que vous souhaitez fournir
-3. Un bloc `nekExporter` qui définit ce qui sera accessible
-
-## Exemple de package
-
-Voici un exemple de package qui fournit des fonctions utilitaires pour travailler avec des tableaux:
+Votre package doit contenir un module principal:
 
 ```
-// NekoTableaux.neko
-nekModule NekoTableaux {
-  nekVariable version = "1.0.0";
-  nekVariable auteur = "Votre Nom";
+nekModule MonPackage {
+  // Importer les dépendances nécessaires
+  nekImporter Base;
   
-  // Fonction pour trouver le maximum d'un tableau
-  nekFonction maximum(tableau) {
-    nekVariable max = tableau[0];
-    
-    pour (nekVariable i = 1; i < tableau.length; i++) {
-      si (tableau[i] > max) {
-        max = tableau[i];
-      }
-    }
-    
-    retourner max;
+  // Variables exportées
+  nekVariable VERSION = "1.0.0";
+  
+  // Fonctions exportées
+  nekFonction maFonction(param) {
+    // Implémentation
+    nekRetourner param * 2;
   }
   
-  // Fonction pour trouver le minimum d'un tableau
-  nekFonction minimum(tableau) {
-    nekVariable min = tableau[0];
-    
-    pour (nekVariable i = 1; i < tableau.length; i++) {
-      si (tableau[i] < min) {
-        min = tableau[i];
-      }
+  // Classes exportées
+  nekClasse MaClasse {
+    constructor() {
+      this.valeur = 42;
     }
     
-    retourner min;
-  }
-  
-  // Fonction pour calculer la moyenne d'un tableau
-  nekFonction moyenne(tableau) {
-    nekVariable somme = 0;
-    
-    pour (nekVariable i = 0; i < tableau.length; i++) {
-      somme += tableau[i];
+    méthode() {
+      nekRetourner this.valeur;
     }
-    
-    retourner somme / tableau.length;
   }
-  
-  // Fonction interne pour valider un tableau (non exportée)
-  nekFonction _validerTableau(tableau) {
-    si (!tableau || tableau.length === 0) {
-      lancer "Le tableau ne peut pas être vide";
-    }
-    
-    retourner vrai;
-  }
-}
-
-// Exports du module
-nekExporter NekoTableaux {
-  version,
-  auteur,
-  maximum,
-  minimum,
-  moyenne
-  // _validerTableau n'est pas exporté car considéré comme privé
 }
 ```
 
-## Publier un package
+### 3. Tester votre package
 
-Pour publier votre package sur le registre nekoScript:
+Avant de publier votre package, testez-le localement:
 
 ```bash
-neko-script publier MonPackage MonPackage/MonPackage.neko "Description de mon package"
+neko-script execute mon-package.neko
 ```
 
-## Packages JavaScript
+## Publication d'un package
 
-Vous pouvez également créer des packages en JavaScript pur et les publier pour nekoScript. Cela permet d'utiliser toute la puissance de JavaScript et de Node.js dans vos packages.
+Pour publier votre package et le rendre disponible pour d'autres développeurs:
 
-Créez un fichier `.js` avec la structure suivante:
+```bash
+neko-script publish mon-package.neko nom-package
+```
+
+Par exemple:
+
+```bash
+neko-script publish math-utils.neko MathUtils
+```
+
+Le nom du package est ce que les autres développeurs utiliseront pour l'importer, il est donc recommandé d'utiliser un nom descriptif et unique.
+
+## Utilisation des packages
+
+Pour utiliser un package publié dans votre code:
+
+```
+nekModule MonApplication {
+  // Importer le package
+  nekImporter NomPackage;
+  
+  nekFonction nekPrincipal() {
+    // Utiliser les fonctionnalités du package
+    nekVariable resultat = NomPackage.maFonction(21);
+    nekAfficher(resultat); // Affiche 42
+    
+    nekVariable instance = new NomPackage.MaClasse();
+    nekAfficher(instance.méthode()); // Affiche 42
+  }
+}
+```
+
+## Packages JavaScript vs nekoScript
+
+Vous pouvez publier des packages écrits en JavaScript ou en nekoScript:
+
+### Package nekoScript (.neko)
+
+Les packages nekoScript sont écrits dans la syntaxe nekoScript et sont plus intuitifs pour les développeurs nekoScript.
+
+### Package JavaScript (.js)
+
+Les packages JavaScript vous permettent d'utiliser toute la puissance de JavaScript et d'intégrer des bibliothèques externes:
 
 ```javascript
-// MonPackageJS.js
+// math-utils.js
 module.exports = {
-  version: "1.0.0",
+  VERSION: "1.0.0",
   
-  maFonction: function(param1, param2) {
-    // Code JavaScript
-    return "Résultat";
+  doubler: function(x) {
+    return x * 2;
   },
   
-  autreExport: "Valeur"
+  MathClass: class {
+    constructor() {
+      this.value = 42;
+    }
+    
+    getValue() {
+      return this.value;
+    }
+  }
 };
 ```
 
-Publiez-le comme un package nekoScript:
+Pour publier un package JavaScript:
 
 ```bash
-neko-script publier MonPackageJS MonPackageJS.js "Un package écrit en JavaScript"
-```
-
-## Utilisation d'un package
-
-Une fois votre package publié, vous pouvez l'utiliser dans n'importe quel script nekoScript:
-
-```
-// Importer le package
-nekImporter NekoTableaux;
-
-// Utiliser ses fonctions
-nekVariable nombres = [5, 3, 8, 2, 9, 1];
-nekVariable max = NekoTableaux.maximum(nombres);
-nekVariable min = NekoTableaux.minimum(nombres);
-nekVariable moy = NekoTableaux.moyenne(nombres);
-
-nekAfficher("Maximum: " + max);
-nekAfficher("Minimum: " + min);
-nekAfficher("Moyenne: " + moy);
+neko-script publish math-utils.js MathUtils
 ```
 
 ## Bonnes pratiques
 
-1. **Documentation**: Fournissez toujours un README.md clair et des exemples d'utilisation.
-2. **Nommage**: Utilisez un nom unique et descriptif pour votre package.
-3. **Tests**: Testez votre package avec différents cas d'utilisation avant de le publier.
-4. **Versionnage**: Utilisez la sémantique de version (majeur.mineur.correctif).
-5. **Fonctions privées**: Préfixez par `_` les fonctions internes non destinées à être utilisées directement.
+- **Nommez clairement vos fonctions et classes**: Utilisez des noms descriptifs qui reflètent ce que fait votre code.
+- **Ajoutez une documentation**: Commentez votre code pour expliquer comment l'utiliser.
+- **Testez exhaustivement**: Assurez-vous que votre package fonctionne correctement avant de le publier.
+- **Respectez les conventions**: Utilisez le préfixe `nek` pour les fonctions principales.
+- **Gestion des versions**: Mettez à jour la variable VERSION lorsque vous apportez des modifications.
 
-## Support des différentes plateformes
+## Exemples
 
-Si votre package utilise des fonctionnalités spécifiques (Discord, Web, etc.), indiquez-le clairement dans la documentation et ajoutez des vérifications appropriées.
+### Exemple 1: Package utilitaire pour les chaînes de caractères
 
----
+```
+nekModule StringUtils {
+  nekImporter Base;
+  
+  nekVariable VERSION = "1.0.0";
+  
+  // Fonction pour inverser une chaîne
+  nekFonction nekInverser(texte) {
+    nekRetourner texte.split('').reverse().join('');
+  }
+  
+  // Fonction pour mettre en majuscules
+  nekFonction nekMajuscules(texte) {
+    nekRetourner texte.toUpperCase();
+  }
+  
+  // Fonction pour mettre en minuscules
+  nekFonction nekMinuscules(texte) {
+    nekRetourner texte.toLowerCase();
+  }
+}
+```
 
-Ce guide vous a fourni les bases pour créer vos propres packages nekoScript. Explorez la documentation complète pour plus d'informations sur les fonctionnalités avancées.
+### Exemple 2: Package pour l'animation
+
+```
+nekModule Animation {
+  nekImporter Base;
+  
+  nekVariable VERSION = "1.0.0";
+  
+  // Classe pour gérer les animations
+  nekClasse Animation {
+    constructor(durée, fonctionTemps = t => t) {
+      this.durée = durée;
+      this.fonctionTemps = fonctionTemps;
+      this.démarré = false;
+      this.tempsÉcoulé = 0;
+      this.progression = 0;
+    }
+    
+    démarrer() {
+      this.démarré = true;
+      this.tempsÉcoulé = 0;
+      this.dernierTemps = Date.now();
+    }
+    
+    mettreÀJour() {
+      if (!this.démarré) nekRetourner 0;
+      
+      const maintenant = Date.now();
+      this.tempsÉcoulé += maintenant - this.dernierTemps;
+      this.dernierTemps = maintenant;
+      
+      if (this.tempsÉcoulé >= this.durée) {
+        this.tempsÉcoulé = this.durée;
+        this.démarré = false;
+      }
+      
+      this.progression = this.fonctionTemps(this.tempsÉcoulé / this.durée);
+      nekRetourner this.progression;
+    }
+    
+    estTerminé() {
+      nekRetourner !this.démarré && this.tempsÉcoulé > 0;
+    }
+  }
+  
+  // Fonctions d'interpolation
+  nekVariable Interpolation = {
+    linéaire: t => t,
+    quadratique: t => t * t,
+    cubique: t => t * t * t,
+    sinusoïdale: t => 1 - Math.cos(t * Math.PI / 2)
+  };
+}
+```
+
+Pour publier ces packages:
+
+```bash
+neko-script publish string-utils.neko StringUtils
+neko-script publish animation.neko Animation
+```
+
+Pour les utiliser:
+
+```
+nekModule MonApplication {
+  nekImporter StringUtils;
+  nekImporter Animation;
+  
+  nekFonction nekPrincipal() {
+    // Utiliser StringUtils
+    nekVariable texte = "Bonjour nekoScript!";
+    nekAfficher(StringUtils.nekInverser(texte)); // "!tpircSoken ruojnoB"
+    
+    // Utiliser Animation
+    nekVariable anim = new Animation.Animation(1000, Animation.Interpolation.sinusoïdale);
+    anim.démarrer();
+    // Puis utiliser anim.mettreÀJour() dans une boucle d'animation
+  }
+}
+```

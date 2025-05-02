@@ -1,200 +1,317 @@
-// Exemple réel de jeu avec nekoScript
-// Pour utiliser ce script, installez canvas: npm install canvas
-
-// Import du module NekoJeu avec canvas réel
-nekImporter NekoJeu
-
-// Configuration du jeu
-nekVariable largeur = 800
-nekVariable hauteur = 600
-nekVariable jeu = NekoJeu.Canvas(largeur, hauteur, "Mon Jeu nekoScript")
-
-// Variables de jeu
-nekVariable score = 0
-nekVariable vies = 3
-nekVariable niveau = 1
-nekVariable joueurX = largeur / 2
-nekVariable joueurY = hauteur - 50
-nekVariable vitesseJoueur = 5
-nekVariable projectiles = []
-nekVariable ennemis = []
-nekVariable jeuEnCours = true
-
-// Création du joueur
-nekFonction initialiserJoueur() {
-  retourner jeu.créerSprite("joueur.png", joueurX, joueurY, 50, 30)
-}
-
-// Création d'un ennemi
-nekFonction creerEnnemi(x, y) {
-  nekVariable ennemi = jeu.créerSprite("ennemi.png", x, y, 40, 40)
-  ennemi.vitesseX = Math.random() * 2 - 1  // Vitesse entre -1 et 1
-  ennemi.vitesseY = 1 + Math.random() * niveau * 0.5
-  ennemi.valeur = 10 * niveau
-  retourner ennemi
-}
-
-// Création d'un projectile
-nekFonction tirer() {
-  nekVariable projectile = jeu.créerSprite("projectile.png", joueurX + 20, joueurY - 10, 10, 20)
-  projectile.vitesseY = -8  // Vitesse négative pour monter
-  projectiles.push(projectile)
-}
-
-// Initialisation du joueur
-nekVariable joueur = initialiserJoueur()
-
-// Gestionnaires de touches
-// Touche gauche
-jeu.surTouche("ArrowLeft", (estAppuyée) => {
-  si (estAppuyée) {
-    joueurX -= vitesseJoueur
-    
-    // Limiter aux bords de l'écran
-    si (joueurX < 0) joueurX = 0
-    
-    // Mettre à jour la position du sprite
-    joueur.nekBouger(joueurX - joueur.x, 0)
-  }
-})
-
-// Touche droite
-jeu.surTouche("ArrowRight", (estAppuyée) => {
-  si (estAppuyée) {
-    joueurX += vitesseJoueur
-    
-    // Limiter aux bords de l'écran
-    si (joueurX > largeur - 50) joueurX = largeur - 50
-    
-    // Mettre à jour la position du sprite
-    joueur.nekBouger(joueurX - joueur.x, 0)
-  }
-})
-
-// Touche espace pour tirer
-jeu.surTouche("Space", (estAppuyée) => {
-  si (estAppuyée && jeuEnCours) {
-    tirer()
-  }
-})
-
-// Fonction pour créer des ennemis périodiquement
-nekFonction creerEnnemisAleatoires() {
-  si (!jeuEnCours) retourner
+// jeu-reel.neko - Un jeu simple créé avec nekoScript
+nekModule NekoJeu {
+  // Importer les packages nécessaires
+  nekImporter Base;
+  nekImporter NekoJeu;
   
-  // Fréquence d'apparition basée sur le niveau
-  nekVariable nombreEnnemis = Math.min(niveau + 1, 5)
+  // Configuration du jeu
+  nekVariable LARGEUR = 800;
+  nekVariable HAUTEUR = 600;
+  nekVariable TITRE = "Neko Aventure";
   
-  pour (nekVariable i = 0; i < nombreEnnemis; i++) {
-    nekVariable x = Math.random() * (largeur - 50)
-    nekVariable y = Math.random() * 100
-    
-    nekVariable ennemi = creerEnnemi(x, y)
-    ennemis.push(ennemi)
-  }
-}
-
-// Fonction pour détection de collision
-nekFonction detecterCollision(objetA, objetB) {
-  retourner !(objetA.x + objetA.width < objetB.x || 
-              objetA.x > objetB.x + objetB.width || 
-              objetA.y + objetA.height < objetB.y || 
-              objetA.y > objetB.y + objetB.height)
-}
-
-// Fonction pour passer au niveau suivant
-nekFonction niveauSuivant() {
-  niveau += 1
-  score += niveau * 50
-  vitesseJoueur += 0.5
-  
-  // Augmenter la difficulté
-  creerEnnemisAleatoires()
-}
-
-// Boucle principale du jeu
-jeu.surMiseAJour(() => {
-  si (!jeuEnCours) {
-    jeu.afficherTexte("GAME OVER", largeur/2 - 80, hauteur/2, "red", "36px Arial")
-    jeu.afficherTexte("Score final: " + score, largeur/2 - 80, hauteur/2 + 40, "white", "20px Arial")
-    jeu.afficherTexte("Appuyez sur ESPACE pour recommencer", largeur/2 - 150, hauteur/2 + 80, "white", "16px Arial")
-    retourner
-  }
-  
-  // Mise à jour des projectiles
-  pour (nekVariable i = projectiles.length - 1; i >= 0; i--) {
-    nekVariable projectile = projectiles[i]
-    projectile.y += projectile.vitesseY
-    
-    // Supprimer les projectiles hors écran
-    si (projectile.y < -20) {
-      projectiles.splice(i, 1)
-      continuer
+  // Classe pour le joueur
+  nekClasse Joueur {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.largeur = 50;
+      this.hauteur = 50;
+      this.vitesseX = 0;
+      this.vitesseY = 0;
+      this.acceleration = 0.5;
+      this.deceleration = 0.8;
+      this.vitesseMax = 8;
+      this.couleur = "#0088ff";
+      this.score = 0;
+      this.enSaut = false;
     }
     
-    // Vérifier les collisions avec les ennemis
-    pour (nekVariable j = ennemis.length - 1; j >= 0; j--) {
-      nekVariable ennemi = ennemis[j]
+    dessiner(ctx) {
+      // Dessiner le joueur
+      ctx.fillStyle = this.couleur;
+      ctx.fillRect(this.x, this.y, this.largeur, this.hauteur);
       
-      si (detecterCollision(projectile, ennemi)) {
-        // Incrémenter le score
-        score += ennemi.valeur
+      // Ajouter les yeux et les oreilles pour faire un chat
+      // Oreilles
+      ctx.fillStyle = "#006bcc";
+      ctx.beginPath();
+      ctx.moveTo(this.x + 5, this.y);
+      ctx.lineTo(this.x + 15, this.y - 15);
+      ctx.lineTo(this.x + 25, this.y);
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(this.x + 25, this.y);
+      ctx.lineTo(this.x + 35, this.y - 15);
+      ctx.lineTo(this.x + 45, this.y);
+      ctx.fill();
+      
+      // Yeux
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(this.x + 15, this.y + 15, 7, 0, Math.PI * 2);
+      ctx.arc(this.x + 35, this.y + 15, 7, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = "black";
+      ctx.beginPath();
+      ctx.arc(this.x + 15, this.y + 15, 3, 0, Math.PI * 2);
+      ctx.arc(this.x + 35, this.y + 15, 3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Museau
+      ctx.fillStyle = "#ffb6c1";
+      ctx.beginPath();
+      ctx.arc(this.x + 25, this.y + 30, 8, 0, Math.PI);
+      ctx.fill();
+      
+      // Moustaches
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 2;
+      
+      // Gauche
+      ctx.beginPath();
+      ctx.moveTo(this.x + 15, this.y + 30);
+      ctx.lineTo(this.x, this.y + 25);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(this.x + 15, this.y + 30);
+      ctx.lineTo(this.x, this.y + 30);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(this.x + 15, this.y + 30);
+      ctx.lineTo(this.x, this.y + 35);
+      ctx.stroke();
+      
+      // Droite
+      ctx.beginPath();
+      ctx.moveTo(this.x + 35, this.y + 30);
+      ctx.lineTo(this.x + 50, this.y + 25);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(this.x + 35, this.y + 30);
+      ctx.lineTo(this.x + 50, this.y + 30);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(this.x + 35, this.y + 30);
+      ctx.lineTo(this.x + 50, this.y + 35);
+      ctx.stroke();
+    }
+    
+    mettreAJour(touches, plateformes) {
+      // Gérer le mouvement horizontal
+      if (touches.gauche) {
+        this.vitesseX -= this.acceleration;
+        if (this.vitesseX < -this.vitesseMax) {
+          this.vitesseX = -this.vitesseMax;
+        }
+      } else if (touches.droite) {
+        this.vitesseX += this.acceleration;
+        if (this.vitesseX > this.vitesseMax) {
+          this.vitesseX = this.vitesseMax;
+        }
+      } else {
+        // Décélération
+        this.vitesseX *= this.deceleration;
+        if (Math.abs(this.vitesseX) < 0.1) {
+          this.vitesseX = 0;
+        }
+      }
+      
+      // Appliquer la gravité
+      this.vitesseY += 0.5;
+      
+      // Sauter si on est sur une plateforme
+      if (touches.haut && !this.enSaut) {
+        this.vitesseY = -12;
+        this.enSaut = true;
+      }
+      
+      // Déplacer le joueur
+      this.x += this.vitesseX;
+      this.y += this.vitesseY;
+      
+      // Vérifier les collisions avec les bords de l'écran
+      if (this.x < 0) {
+        this.x = 0;
+        this.vitesseX = 0;
+      }
+      if (this.x + this.largeur > LARGEUR) {
+        this.x = LARGEUR - this.largeur;
+        this.vitesseX = 0;
+      }
+      
+      // Vérifier les collisions avec les plateformes
+      this.enSaut = true;
+      for (const plateforme of plateformes) {
+        if (
+          this.x + this.largeur > plateforme.x &&
+          this.x < plateforme.x + plateforme.largeur &&
+          this.y + this.hauteur >= plateforme.y &&
+          this.y + this.hauteur <= plateforme.y + 10 &&
+          this.vitesseY > 0
+        ) {
+          this.y = plateforme.y - this.hauteur;
+          this.vitesseY = 0;
+          this.enSaut = false;
+          
+          // Si c'est une plateforme bonus
+          if (plateforme.type === "bonus" && !plateforme.collecte) {
+            this.score += 10;
+            plateforme.collecte = true;
+          }
+        }
+      }
+      
+      // Si le joueur tombe en bas de l'écran
+      if (this.y > HAUTEUR) {
+        this.x = LARGEUR / 2 - this.largeur / 2;
+        this.y = 50;
+        this.vitesseY = 0;
+        this.score = Math.max(0, this.score - 5);
+      }
+    }
+  }
+  
+  // Classe pour les plateformes
+  nekClasse Plateforme {
+    constructor(x, y, largeur, type = "normal") {
+      this.x = x;
+      this.y = y;
+      this.largeur = largeur;
+      this.hauteur = 20;
+      this.type = type;
+      this.collecte = false;
+    }
+    
+    dessiner(ctx) {
+      if (this.type === "normal") {
+        ctx.fillStyle = "#8b4513";
+      } else if (this.type === "bonus" && !this.collecte) {
+        ctx.fillStyle = "#ffd700";
+      } else {
+        ctx.fillStyle = "#8b4513";
+      }
+      
+      ctx.fillRect(this.x, this.y, this.largeur, this.hauteur);
+      
+      // Ajouter un peu de détail
+      ctx.fillStyle = this.type === "normal" ? "#a0522d" : "#daa520";
+      ctx.fillRect(this.x, this.y, this.largeur, 5);
+    }
+  }
+  
+  // Fonction principale
+  nekFonction nekPrincipal() {
+    nekAfficher("Initialisation du jeu nekoScript...");
+    
+    // Créer le jeu
+    nekVariable jeu = NekoJeu.créerJeu(TITRE, LARGEUR, HAUTEUR);
+    
+    // Variables du jeu
+    nekVariable joueur = new Joueur(LARGEUR / 2 - 25, 50);
+    nekVariable plateformes = [];
+    nekVariable touches = {
+      gauche: false,
+      droite: false,
+      haut: false
+    };
+    
+    // Initialiser les plateformes
+    nekFonction initialiserPlateformes() {
+      plateformes = [];
+      
+      // Plateforme de départ
+      plateformes.push(new Plateforme(LARGEUR / 2 - 50, 200, 100));
+      
+      // Ajouter des plateformes aléatoires
+      for (let i = 0; i < 10; i++) {
+        const x = Math.random() * (LARGEUR - 100);
+        const y = 250 + i * 70;
+        const largeur = 70 + Math.random() * 100;
+        const type = Math.random() > 0.7 ? "bonus" : "normal";
         
-        // Supprimer l'ennemi et le projectile
-        ennemis.splice(j, 1)
-        projectiles.splice(i, 1)
-        break
+        plateformes.push(new Plateforme(x, y, largeur, type));
       }
     }
-  }
-  
-  // Mise à jour des ennemis
-  pour (nekVariable i = ennemis.length - 1; i >= 0; i--) {
-    nekVariable ennemi = ennemis[i]
     
-    // Déplacer l'ennemi
-    ennemi.x += ennemi.vitesseX
-    ennemi.y += ennemi.vitesseY
+    // Initialiser le jeu
+    initialiserPlateformes();
     
-    // Rebondir sur les bords
-    si (ennemi.x <= 0 || ennemi.x >= largeur - ennemi.width) {
-      ennemi.vitesseX *= -1
+    // Gestion des entrées clavier
+    nekFonction gestionClavier() {
+      // Gestion des touches au clavier
+      jeu.surTouche("ArrowLeft", (appuye) => {
+        touches.gauche = appuye;
+      });
+      
+      jeu.surTouche("ArrowRight", (appuye) => {
+        touches.droite = appuye;
+      });
+      
+      jeu.surTouche("ArrowUp", (appuye) => {
+        touches.haut = appuye;
+      });
+      
+      jeu.surTouche(" ", (appuye) => {
+        touches.haut = appuye;
+      });
     }
     
-    // Supprimer les ennemis qui sortent de l'écran
-    si (ennemi.y > hauteur) {
-      ennemis.splice(i, 1)
-      vies -= 1
+    // Configurer les gestionnaires d'événements
+    gestionClavier();
+    
+    // Fonction de mise à jour du jeu
+    nekFonction miseAJour(ctx) {
+      // Effacer le canvas
+      ctx.clearRect(0, 0, LARGEUR, HAUTEUR);
       
-      si (vies <= 0) {
-        jeuEnCours = false
+      // Dessiner le fond
+      ctx.fillStyle = "#87CEEB";
+      ctx.fillRect(0, 0, LARGEUR, HAUTEUR);
+      
+      // Dessiner quelques nuages
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(100, 80, 30, 0, Math.PI * 2);
+      ctx.arc(130, 70, 40, 0, Math.PI * 2);
+      ctx.arc(160, 80, 30, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.arc(600, 120, 25, 0, Math.PI * 2);
+      ctx.arc(630, 110, 35, 0, Math.PI * 2);
+      ctx.arc(660, 120, 25, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Mettre à jour et dessiner les plateformes
+      for (const plateforme of plateformes) {
+        plateforme.dessiner(ctx);
       }
       
-      continuer
+      // Mettre à jour et dessiner le joueur
+      joueur.mettreAJour(touches, plateformes);
+      joueur.dessiner(ctx);
+      
+      // Afficher le score
+      ctx.fillStyle = "black";
+      ctx.font = "24px Arial";
+      ctx.fillText("Score: " + joueur.score, 20, 30);
+      
+      // Instructions
+      ctx.fillStyle = "black";
+      ctx.font = "16px Arial";
+      ctx.fillText("Touches: ← → pour se déplacer, ↑ ou Espace pour sauter", LARGEUR / 2 - 200, 30);
     }
     
-    // Vérifier collision avec le joueur
-    si (detecterCollision(joueur, ennemi)) {
-      vies -= 1
-      ennemis.splice(i, 1)
-      
-      si (vies <= 0) {
-        jeuEnCours = false
-      }
-    }
+    // Démarrer le jeu avec la boucle principale
+    jeu.démarrer(miseAJour);
+    
+    nekAfficher("Jeu nekoScript démarré!");
+    nekRetourner "Jeu démarré avec succès";
   }
-  
-  // Créer de nouveaux ennemis si nécessaire
-  si (ennemis.length === 0) {
-    niveauSuivant()
-  }
-  
-  // Affichage des informations
-  jeu.afficherTexte("Score: " + score, 10, 30, "white", "20px Arial")
-  jeu.afficherTexte("Vies: " + vies, 10, 60, "white", "20px Arial")
-  jeu.afficherTexte("Niveau: " + niveau, 10, 90, "white", "20px Arial")
-})
-
-// Démarrer le jeu
-jeu.démarrer()
-nekAfficher("Jeu démarré! Utilisez les flèches ← → pour déplacer le vaisseau et ESPACE pour tirer.")
+}

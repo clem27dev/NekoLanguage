@@ -1,294 +1,248 @@
-# Exécution réelle des applications nekoScript
+# Exécution Réelle dans nekoScript
 
-nekoScript permet de créer et d'exécuter des applications réelles comme:
-- Des bots Discord
-- Des applications web
-- Des jeux
+Ce document explique comment exécuter réellement du code nekoScript au lieu d'utiliser des simulations. L'interpréteur nekoScript peut désormais exécuter du vrai code et interagir avec des APIs externes.
 
-Ce guide vous explique comment utiliser ces fonctionnalités.
+## Table des matières
 
-## Utilisation de la commande `démarrer`
+1. [Introduction](#introduction)
+2. [Exécution de scripts simples](#exécution-de-scripts-simples)
+3. [Exécution d'applications persistantes](#exécution-dapplications-persistantes)
+4. [Bots Discord](#bots-discord)
+5. [Applications Web](#applications-web)
+6. [Jeux](#jeux)
+7. [Dépannage](#dépannage)
 
-Pour exécuter une application en mode persistant (qui continue à fonctionner après la fin du script), utilisez la commande `démarrer`:
+## Introduction
+
+nekoScript est maintenant capable d'exécuter réellement votre code au lieu de simplement simuler l'exécution. Cela signifie que vous pouvez créer des applications fonctionnelles comme:
+
+- Des bots Discord qui interagissent avec de vrais serveurs
+- Des applications web qui génèrent des pages HTML dynamiques
+- Des jeux qui utilisent Canvas pour le rendu graphique
+
+## Exécution de scripts simples
+
+Pour exécuter un script nekoScript:
 
 ```bash
-neko-script démarrer mon-application.neko
+neko-script execute mon-script.neko
 ```
 
-Cette commande lance l'application et la maintient active en arrière-plan. Vous pouvez fermer votre terminal et l'application continuera à s'exécuter.
+ou en utilisant la forme française:
 
-## Bots Discord avec nekoScript
-
-### Exemple de bot Discord
-
-Voici un exemple simple de bot Discord en nekoScript:
-
-```
-// bot-discord.neko
-nekModule MonBot {
-  // Importer le module Discord
-  nekImporter Discord;
-  
-  // Configuration
-  nekVariable TOKEN = "VOTRE_TOKEN_DISCORD"; // Remplacez par votre token Discord
-  nekVariable PREFIX = "!"; // Préfixe pour les commandes
-  
-  nekFonction nekPrincipal() {
-    nekAfficher("Démarrage du bot Discord...");
-    
-    // Créer le bot
-    nekVariable bot = Discord.Bot(TOKEN);
-    
-    // Gérer les commandes avec un préfixe
-    bot.surCommande(PREFIX, (commande) => {
-      // Commande ping
-      si (commande.nom === "ping") {
-        commande.repondre("Pong! 🏓");
-      }
-      
-      // Commande info
-      si (commande.nom === "info") {
-        commande.repondre(`Bonjour ${commande.auteur.nom}! Je suis un bot nekoScript.`);
-      }
-    });
-    
-    // Démarrer le bot
-    bot.démarrer();
-    nekAfficher("Bot démarré et connecté à Discord!");
-  }
-}
+```bash
+neko-script exécuter mon-script.neko
 ```
 
-### Configuration et exécution
+## Exécution d'applications persistantes
 
-1. Créez une application sur le [Portail des développeurs Discord](https://discord.com/developers/applications).
-2. Créez un bot et copiez son token.
-3. Remplacez `VOTRE_TOKEN_DISCORD` dans le code par votre token réel.
-4. Exécutez le bot avec:
-   ```bash
-   neko-script démarrer bot-discord.neko
-   ```
+Les applications comme les bots Discord, les serveurs web ou les jeux doivent continuer à fonctionner en arrière-plan. Pour démarrer une application persistante:
 
-### Fonctionnalités supportées
-
-- `bot.surMessage(fn)`: Réagir à tous les messages
-- `bot.surCommande(prefix, fn)`: Réagir aux commandes avec un préfixe
-- `bot.surReaction(fn)`: Réagir aux réactions d'emoji
-- `bot.changerStatut(message, type)`: Changer le statut du bot
-- `bot.créerEmbed(titre, description, couleur)`: Créer un message embed
-- `bot.démarrer()`: Connecter le bot à Discord
-
-## Applications Web avec nekoScript
-
-### Exemple d'application web
-
-Voici un exemple d'application web en nekoScript:
-
-```
-// web-app.neko
-nekModule MonSite {
-  // Importer le module Web
-  nekImporter Web;
-  
-  // Configuration
-  nekVariable PORT = 3000;
-  
-  nekFonction nekPrincipal() {
-    nekAfficher("Démarrage du serveur web...");
-    
-    // Créer l'application Express
-    nekVariable app = Web.Express();
-    
-    // Servir des fichiers statiques
-    app.utiliser(Web.Static("./public"));
-    
-    // Route principale
-    app.route("GET", "/", (req, res) => {
-      res.envoyer(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Mon Site nekoScript</title>
-          <style>
-            body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; }
-            h1 { color: #333; }
-          </style>
-        </head>
-        <body>
-          <h1>Bienvenue sur mon site nekoScript!</h1>
-          <p>Cette page est servie par un vrai serveur Express via nekoScript.</p>
-        </body>
-        </html>
-      `);
-    });
-    
-    // API JSON
-    app.route("GET", "/api/info", (req, res) => {
-      res.json({
-        nom: "Mon API nekoScript",
-        version: "1.0.0",
-        timestamp: new Date().toISOString()
-      });
-    });
-    
-    // Démarrer le serveur
-    app.écouter(PORT, () => {
-      nekAfficher(`Serveur démarré sur http://localhost:${PORT}`);
-    });
-  }
-}
+```bash
+neko-script start mon-app.neko
 ```
 
-### Configuration et exécution
+ou en utilisant la forme française:
 
-1. Assurez-vous que la dépendance Express est installée:
-   ```bash
-   npm install express
-   ```
-2. Créez un dossier `public` pour les fichiers statiques si nécessaire.
-3. Démarrez l'application web:
-   ```bash
-   neko-script démarrer web-app.neko
-   ```
-
-### Fonctionnalités supportées
-
-- `app.route(méthode, chemin, gestionnaire)`: Définir une route avec une méthode HTTP
-- `app.utiliser(middleware)`: Utiliser un middleware Express
-- `app.écouter(port, callback)`: Démarrer le serveur sur un port
-- `Web.Static(chemin)`: Servir des fichiers statiques depuis un dossier
-
-## Jeux avec nekoScript
-
-### Exemple de jeu
-
-Voici un exemple de jeu simple en nekoScript:
-
-```
-// jeu.neko
-nekModule MonJeu {
-  // Importer le module de jeu
-  nekImporter NekoJeu;
-  
-  // Configuration
-  nekVariable LARGEUR = 800;
-  nekVariable HAUTEUR = 600;
-  nekVariable TITRE = "Mon Jeu nekoScript";
-  
-  nekFonction nekPrincipal() {
-    nekAfficher("Initialisation du jeu...");
-    
-    // Créer le canvas de jeu
-    nekVariable jeu = NekoJeu.Canvas(LARGEUR, HAUTEUR, TITRE);
-    
-    // Variables du jeu
-    nekVariable score = 0;
-    nekVariable joueurX = LARGEUR / 2;
-    nekVariable joueurY = HAUTEUR - 50;
-    
-    // Créer le joueur (sera représenté selon la disponibilité de canvas)
-    nekVariable joueur = jeu.créerSprite("joueur.png", joueurX, joueurY, 50, 50);
-    
-    // Gestion des touches
-    jeu.surTouche("ArrowLeft", (estAppuyée) => {
-      si (estAppuyée) {
-        joueurX = Math.max(0, joueurX - 5);
-        joueur.nekBouger(joueurX - joueur.x, 0);
-      }
-    });
-    
-    jeu.surTouche("ArrowRight", (estAppuyée) => {
-      si (estAppuyée) {
-        joueurX = Math.min(LARGEUR - 50, joueurX + 5);
-        joueur.nekBouger(joueurX - joueur.x, 0);
-      }
-    });
-    
-    // Boucle de jeu
-    jeu.surMiseAJour(() => {
-      // Afficher le score
-      jeu.afficherTexte("Score: " + score, 10, 30, "white");
-      
-      // Incrémenter le score
-      score += 1;
-    });
-    
-    // Démarrer le jeu
-    jeu.démarrer();
-    nekAfficher("Jeu démarré!");
-  }
-}
+```bash
+neko-script démarrer mon-app.neko
 ```
 
-### Configuration et exécution
+### Gestion des applications persistantes
 
-1. Assurez-vous que la dépendance Canvas est installée pour de meilleurs résultats:
-   ```bash
-   npm install canvas
-   ```
-2. Préparez vos assets (images) si nécessaire.
-3. Démarrez le jeu:
-   ```bash
-   neko-script démarrer jeu.neko
-   ```
+Pour voir les applications en cours d'exécution:
 
-### Fonctionnalités supportées
+```bash
+neko-script processes
+```
 
-- `jeu.créerSprite(image, x, y, largeur, hauteur)`: Créer un sprite
-- `jeu.surTouche(touche, gestionnaire)`: Réagir aux touches du clavier
-- `jeu.afficherTexte(texte, x, y, couleur)`: Afficher du texte
-- `jeu.dessinerRectangle(x, y, largeur, hauteur, couleur)`: Dessiner un rectangle
-- `jeu.surMiseAJour(fn)`: Définir la fonction de boucle de jeu
-- `jeu.démarrer()`: Démarrer le jeu
-
-## Gestion des processus
-
-### Lister les applications en cours d'exécution
-
-Pour voir toutes les applications nekoScript actives:
+ou en français:
 
 ```bash
 neko-script processus
 ```
 
-Cela affiche une liste de toutes les applications avec leur ID, type, et temps d'exécution.
-
-### Arrêter une application
-
 Pour arrêter une application en cours d'exécution:
 
 ```bash
-neko-script arrêter <id>
+neko-script stop <id_processus>
 ```
 
-Remplacez `<id>` par l'ID de l'application que vous souhaitez arrêter.
+ou en français:
 
-## Dépendances et prérequis
-
-Pour les fonctionnalités avancées, assurez-vous d'avoir les dépendances appropriées:
-
-- Bots Discord: `npm install discord.js`
-- Applications web: `npm install express`
-- Jeux: `npm install canvas`
-
-nekoScript vérifiera automatiquement ces dépendances et vous avertira si elles sont manquantes.
-
-## Utilisation de .env pour les secrets
-
-Pour les tokens et autres secrets, nous vous recommandons d'utiliser un fichier `.env`:
-
-```
-# .env
-DISCORD_TOKEN=votre_token_discord
-API_KEY=votre_clé_api
+```bash
+neko-script arrêter <id_processus>
 ```
 
-Puis dans votre code nekoScript:
+## Bots Discord
+
+Pour créer un bot Discord fonctionnel avec nekoScript, vous devez:
+
+1. Créer une application sur le [Portail Développeur Discord](https://discord.com/developers/applications)
+2. Récupérer le token de votre bot
+3. Créer un script nekoScript qui utilise ce token
+
+Exemple:
 
 ```
-nekVariable TOKEN = process.env.DISCORD_TOKEN;
+// bot-discord.neko
+nekModule MonBot {
+  // Importer les packages nécessaires
+  nekImporter Base;
+  nekImporter Discord;
+  
+  // Configuration du bot
+  nekVariable TOKEN = "VOTRE_TOKEN_DISCORD"; // Remplacer par votre token
+  nekVariable PREFIX = "!";
+  
+  // Fonction principale
+  nekFonction nekPrincipal() {
+    nekAfficher("Démarrage du bot Discord...");
+    
+    // Créer le bot
+    nekVariable bot = Discord.créerBot(TOKEN);
+    
+    // Configurer les événements
+    bot.surMessage(message => {
+      si (message.contenu === PREFIX + "ping") {
+        message.répondre("Pong! 🏓");
+      }
+    });
+    
+    // Démarrer le bot
+    bot.démarrer();
+    
+    nekRetourner "Bot démarré avec succès";
+  }
+}
 ```
 
-## Conclusion
+Pour démarrer le bot:
 
-Avec nekoScript, vous pouvez maintenant créer de véritables applications qui communiquent avec le monde extérieur. Explorez ces fonctionnalités et créez des bots, des sites web et des jeux en français avec une syntaxe simple et intuitive!
+```bash
+neko-script démarrer bot-discord.neko
+```
+
+## Applications Web
+
+nekoScript permet de créer des applications web avec une syntaxe simplifiée basée sur Express.js.
+
+Exemple:
+
+```
+// web-app.neko
+nekModule MonSite {
+  // Importer les packages nécessaires
+  nekImporter Base;
+  nekImporter Web;
+  
+  // Configuration
+  nekVariable PORT = 3000;
+  
+  // Fonction principale
+  nekFonction nekPrincipal() {
+    nekAfficher("Démarrage du serveur web...");
+    
+    // Créer le serveur
+    nekVariable app = Web.créerServeur();
+    
+    // Configurer les routes
+    app.créerRoute("accueil", "GET", "/", (requête, réponse) => {
+      réponse.envoyerHTML("<h1>Bienvenue sur mon site nekoScript!</h1>");
+    });
+    
+    app.créerRoute("api", "GET", "/api", (requête, réponse) => {
+      réponse.envoyerJSON({ message: "Bonjour depuis l'API!" });
+    });
+    
+    // Démarrer le serveur
+    app.démarrer(PORT);
+    
+    nekRetourner "Serveur démarré sur le port " + PORT;
+  }
+}
+```
+
+Pour démarrer l'application web:
+
+```bash
+neko-script démarrer web-app.neko
+```
+
+## Jeux
+
+nekoScript permet de créer des jeux simples avec Canvas.
+
+Exemple:
+
+```
+// mon-jeu.neko
+nekModule MonJeu {
+  // Importer les packages nécessaires
+  nekImporter Base;
+  nekImporter NekoJeu;
+  
+  // Configuration
+  nekVariable LARGEUR = 800;
+  nekVariable HAUTEUR = 600;
+  
+  // Fonction principale
+  nekFonction nekPrincipal() {
+    nekAfficher("Initialisation du jeu...");
+    
+    // Créer le jeu
+    nekVariable jeu = NekoJeu.créerJeu("Mon jeu", LARGEUR, HAUTEUR);
+    
+    // Variables du jeu
+    nekVariable x = LARGEUR / 2;
+    nekVariable y = HAUTEUR / 2;
+    
+    // Fonction de mise à jour
+    nekFonction miseAJour(ctx) {
+      // Effacer le canvas
+      ctx.clearRect(0, 0, LARGEUR, HAUTEUR);
+      
+      // Dessiner un cercle
+      ctx.fillStyle = "red";
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Déplacer le cercle
+      x += (Math.random() - 0.5) * 5;
+      y += (Math.random() - 0.5) * 5;
+      
+      // Garder le cercle dans les limites
+      x = Math.max(20, Math.min(x, LARGEUR - 20));
+      y = Math.max(20, Math.min(y, HAUTEUR - 20));
+    }
+    
+    // Démarrer le jeu
+    jeu.démarrer(miseAJour);
+    
+    nekRetourner "Jeu démarré avec succès";
+  }
+}
+```
+
+Pour démarrer le jeu:
+
+```bash
+neko-script démarrer mon-jeu.neko
+```
+
+## Dépannage
+
+Si vous rencontrez des problèmes avec l'exécution de votre code nekoScript:
+
+1. **Vérifiez votre syntaxe**: Assurez-vous que votre code nekoScript est correctement formaté et ne contient pas d'erreurs de syntaxe.
+
+2. **Vérifiez les dépendances**: Assurez-vous que vous avez importé tous les packages nécessaires.
+
+3. **Tokens et clés API**: Pour les bots Discord ou les applications qui utilisent des APIs externes, assurez-vous d'avoir des tokens valides.
+
+4. **Journaux d'erreurs**: Consultez les messages d'erreur affichés dans la console pour identifier les problèmes.
+
+5. **Réinitialisation**: Si une application persiste en arrière-plan et ne répond plus, utilisez `neko-script arrêter <id>` pour l'arrêter.
+
+Si vous avez besoin d'aide supplémentaire, consultez la documentation complète ou rejoignez notre communauté sur Discord pour obtenir de l'assistance.

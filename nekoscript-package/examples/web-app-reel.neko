@@ -1,190 +1,334 @@
-// Exemple réel d'application web avec nekoScript
-// Pour utiliser ce script, installez express: npm install express
-
-// Import du module Web (Express réel)
-nekImporter Web
-
-// Création d'une application Express réelle
-nekVariable app = Web.Express()
-
-// Configurer des middlewares
-app.utiliser(Web.Static("./public")) // Servir des fichiers statiques depuis ./public
-
-// Route principale (GET /)
-app.route("GET", "/", (req, res) => {
-  res.envoyer(`
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Application nekoScript</title>
-      <style>
-        body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 2rem;
-          line-height: 1.6;
-        }
-        header {
-          text-align: center;
-          margin-bottom: 2rem;
-          padding-bottom: 1rem;
-          border-bottom: 2px solid #f0f0f0;
-        }
-        h1 {
-          color: #333;
-        }
-        .card {
-          background: #f9f9f9;
-          border-radius: 8px;
-          padding: 1.5rem;
-          margin-bottom: 1.5rem;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        button {
-          background: #6b46c1;
-          color: white;
-          border: none;
-          padding: 0.5rem 1rem;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 1rem;
-        }
-        button:hover {
-          background: #553c9a;
-        }
-        #message {
-          margin-top: 1rem;
-          padding: 1rem;
-          background: #e9e9e9;
-          border-radius: 4px;
-          display: none;
-        }
-      </style>
-    </head>
-    <body>
-      <header>
-        <h1>Application Web nekoScript</h1>
-        <p>Ce site fonctionne avec un serveur créé en nekoScript!</p>
-      </header>
-      
-      <div class="card">
-        <h2>Test d'API</h2>
-        <p>Cliquez sur le bouton ci-dessous pour tester l'API REST:</p>
-        <button id="testApi">Tester l'API</button>
-        <div id="message"></div>
-      </div>
-      
-      <div class="card">
-        <h2>Formulaire</h2>
-        <form id="myForm">
-          <div>
-            <label for="name">Nom:</label>
-            <input type="text" id="name" name="name" required>
-          </div>
-          <div style="margin-top: 1rem;">
-            <label for="message">Message:</label>
-            <textarea id="message-input" name="message" rows="3" required></textarea>
-          </div>
-          <button type="submit" style="margin-top: 1rem;">Envoyer</button>
-        </form>
-        <div id="formResponse" style="margin-top: 1rem;"></div>
-      </div>
-      
-      <script>
-        // Test de l'API
-        document.getElementById('testApi').addEventListener('click', async () => {
-          const messageBox = document.getElementById('message');
-          messageBox.style.display = 'block';
-          messageBox.textContent = 'Envoi de la requête...';
+// web-app-reel.neko - Application web créée avec nekoScript
+nekModule WebApp {
+  // Importer les packages nécessaires
+  nekImporter Base;
+  nekImporter Web;
+  
+  // Configuration
+  nekVariable PORT = 3000;
+  nekVariable TITRE = "Application Web nekoScript";
+  
+  // Fonction principale
+  nekFonction nekPrincipal() {
+    nekAfficher("Démarrage du serveur web...");
+    
+    // Créer le serveur
+    nekVariable app = Web.créerServeur();
+    
+    // Configurer les routes
+    app.créerRoute("accueil", "GET", "/", (requête, réponse) => {
+      réponse.envoyerHTML(`
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${TITRE}</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              margin: 0;
+              padding: 0;
+              background-color: #f4f5f7;
+              color: #333;
+            }
+            header {
+              background-color: #6a42f4;
+              color: white;
+              padding: 1rem;
+              text-align: center;
+            }
+            main {
+              max-width: 800px;
+              margin: 20px auto;
+              padding: 20px;
+              background-color: white;
+              border-radius: 5px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            footer {
+              text-align: center;
+              padding: 1rem;
+              background-color: #eee;
+              color: #666;
+              font-size: 0.9rem;
+            }
+            .card {
+              border: 1px solid #ddd;
+              border-radius: 5px;
+              padding: 15px;
+              margin-bottom: 15px;
+              background-color: #f9f9f9;
+            }
+            .btn {
+              display: inline-block;
+              background-color: #6a42f4;
+              color: white;
+              padding: 10px 15px;
+              border-radius: 4px;
+              text-decoration: none;
+              margin-right: 10px;
+            }
+            .btn:hover {
+              background-color: #5535c6;
+            }
+          </style>
+        </head>
+        <body>
+          <header>
+            <h1>🐱 ${TITRE}</h1>
+            <p>Une application web créée avec nekoScript</p>
+          </header>
           
-          try {
-            const response = await fetch('/api/hello');
-            const data = await response.json();
+          <main>
+            <h2>Bienvenue sur votre application web</h2>
+            <p>Cette page a été générée dynamiquement par un serveur nekoScript.</p>
             
-            messageBox.textContent = 'Réponse du serveur: ' + data.message;
-          } catch (error) {
-            messageBox.textContent = 'Erreur: ' + error.message;
-          }
-        });
-        
-        // Formulaire
-        document.getElementById('myForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const responseDiv = document.getElementById('formResponse');
-          responseDiv.textContent = 'Envoi des données...';
+            <div class="card">
+              <h3>Fonctionnalités disponibles</h3>
+              <p>Cette application démontre comment créer un serveur web avec nekoScript. Voici quelques routes disponibles:</p>
+              <ul>
+                <li><a href="/">Page d'accueil</a> - Cette page</li>
+                <li><a href="/api">API</a> - Retourne des données au format JSON</li>
+                <li><a href="/compteur">Compteur</a> - Exemple de page interactive</li>
+                <li><a href="/a-propos">À propos</a> - Informations sur l'application</li>
+              </ul>
+            </div>
+            
+            <div class="card">
+              <h3>Essayez l'API</h3>
+              <p>L'API renvoie des informations au format JSON, idéal pour créer des applications modernes.</p>
+              <a href="/api" class="btn">Accéder à l'API</a>
+            </div>
+          </main>
           
-          const formData = {
-            name: document.getElementById('name').value,
-            message: document.getElementById('message-input').value
-          };
+          <footer>
+            <p>Propulsé par nekoScript - Application créée le ${new Date().toLocaleDateString('fr-FR')}</p>
+          </footer>
+        </body>
+        </html>
+      `);
+    });
+    
+    app.créerRoute("api", "GET", "/api", (requête, réponse) => {
+      réponse.envoyerJSON({
+        application: TITRE,
+        version: "1.0.0",
+        moteur: "nekoScript",
+        date: new Date().toISOString(),
+        routes: ["/", "/api", "/compteur", "/a-propos"],
+        status: "opérationnel"
+      });
+    });
+    
+    app.créerRoute("compteur", "GET", "/compteur", (requête, réponse) => {
+      réponse.envoyerHTML(`
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Compteur - ${TITRE}</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              margin: 0;
+              padding: 0;
+              background-color: #f4f5f7;
+              color: #333;
+              text-align: center;
+            }
+            header {
+              background-color: #6a42f4;
+              color: white;
+              padding: 1rem;
+            }
+            main {
+              max-width: 600px;
+              margin: 20px auto;
+              padding: 20px;
+              background-color: white;
+              border-radius: 5px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            .counter {
+              font-size: 5rem;
+              margin: 20px 0;
+              color: #6a42f4;
+            }
+            .btn {
+              display: inline-block;
+              background-color: #6a42f4;
+              color: white;
+              padding: 10px 20px;
+              margin: 5px;
+              border-radius: 4px;
+              border: none;
+              cursor: pointer;
+              font-size: 1rem;
+            }
+            .btn:hover {
+              background-color: #5535c6;
+            }
+            a {
+              color: #6a42f4;
+              text-decoration: none;
+            }
+          </style>
+        </head>
+        <body>
+          <header>
+            <h1>🐱 Compteur nekoScript</h1>
+          </header>
           
-          try {
-            const response = await fetch('/api/submit', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(formData)
+          <main>
+            <h2>Compteur interactif</h2>
+            <p>Cliquez sur les boutons pour modifier le compteur.</p>
+            
+            <div class="counter" id="counter">0</div>
+            
+            <button class="btn" id="decrement">-</button>
+            <button class="btn" id="increment">+</button>
+            <button class="btn" id="reset">Réinitialiser</button>
+            
+            <p>
+              <a href="/">Retour à l'accueil</a>
+            </p>
+          </main>
+          
+          <script>
+            // Code JavaScript client
+            let count = 0;
+            const counterElement = document.getElementById('counter');
+            
+            document.getElementById('increment').addEventListener('click', () => {
+              count++;
+              counterElement.textContent = count;
             });
             
-            const data = await response.json();
-            responseDiv.textContent = 'Message envoyé! Le serveur dit: ' + data.message;
-          } catch (error) {
-            responseDiv.textContent = 'Erreur: ' + error.message;
-          }
-        });
-      </script>
-    </body>
-    </html>
-  `)
-})
-
-// API REST réelle (GET /api/hello)
-app.route("GET", "/api/hello", (req, res) => {
-  nekAfficher("Requête GET /api/hello reçue")
-  res.json({
-    success: true,
-    message: "Bonjour depuis l'API nekoScript!",
-    timestamp: new Date().toISOString()
-  })
-})
-
-// API POST pour le formulaire
-app.route("POST", "/api/submit", (req, res) => {
-  nekVariable nom = req.corps.name
-  nekVariable message = req.corps.message
-  
-  nekAfficher("Formulaire reçu de: " + nom)
-  nekAfficher("Message: " + message)
-  
-  // Dans une vraie application, on sauvegarderait ces données
-  res.json({
-    success: true,
-    message: "Merci pour votre message, " + nom + "!",
-    timestamp: new Date().toISOString()
-  })
-})
-
-// Route dynamique avec paramètres
-app.route("GET", "/utilisateur/:id", (req, res) => {
-  nekVariable userId = req.params.id
-  nekAfficher("Demande d'informations pour l'utilisateur: " + userId)
-  
-  // Simuler une recherche en base de données
-  res.json({
-    id: userId,
-    nom: "Utilisateur " + userId,
-    dateInscription: new Date().toISOString()
-  })
-})
-
-// Démarrer le serveur web
-nekVariable port = 3000
-nekAfficher("Démarrage du serveur web sur le port " + port + "...")
-app.écouter(port, () => {
-  nekAfficher("Serveur web démarré avec succès!")
-  nekAfficher("Ouvrez votre navigateur à l'adresse: http://localhost:" + port)
-})
+            document.getElementById('decrement').addEventListener('click', () => {
+              count--;
+              counterElement.textContent = count;
+            });
+            
+            document.getElementById('reset').addEventListener('click', () => {
+              count = 0;
+              counterElement.textContent = count;
+            });
+          </script>
+        </body>
+        </html>
+      `);
+    });
+    
+    app.créerRoute("a-propos", "GET", "/a-propos", (requête, réponse) => {
+      réponse.envoyerHTML(`
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>À propos - ${TITRE}</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              margin: 0;
+              padding: 0;
+              background-color: #f4f5f7;
+              color: #333;
+            }
+            header {
+              background-color: #6a42f4;
+              color: white;
+              padding: 1rem;
+              text-align: center;
+            }
+            main {
+              max-width: 800px;
+              margin: 20px auto;
+              padding: 20px;
+              background-color: white;
+              border-radius: 5px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            footer {
+              text-align: center;
+              padding: 1rem;
+              background-color: #eee;
+              color: #666;
+              font-size: 0.9rem;
+            }
+            a {
+              color: #6a42f4;
+              text-decoration: none;
+            }
+            a:hover {
+              text-decoration: underline;
+            }
+            .feature {
+              margin-bottom: 20px;
+              padding-bottom: 20px;
+              border-bottom: 1px solid #eee;
+            }
+          </style>
+        </head>
+        <body>
+          <header>
+            <h1>🐱 À propos de ${TITRE}</h1>
+          </header>
+          
+          <main>
+            <h2>À propos de cette application</h2>
+            <p>
+              Cette application web est un exemple créé avec nekoScript, un langage de programmation
+              français conçu pour être accessible et intuitif.
+            </p>
+            
+            <div class="feature">
+              <h3>Langage nekoScript</h3>
+              <p>
+                nekoScript est un langage avec une syntaxe française pour rendre la programmation plus
+                accessible aux développeurs francophones. Il permet de créer des applications web,
+                des bots Discord et des jeux simples.
+              </p>
+            </div>
+            
+            <div class="feature">
+              <h3>Fonctionnalités</h3>
+              <p>
+                Cette application démontre comment créer un serveur web complet avec routes, rendu HTML
+                et API JSON. Vous pouvez l'utiliser comme base pour vos propres projets.
+              </p>
+            </div>
+            
+            <div class="feature">
+              <h3>Technologie</h3>
+              <p>
+                Sous le capot, nekoScript utilise Express.js pour le serveur web, mais avec une syntaxe
+                simplifiée et en français pour faciliter l'apprentissage et le développement.
+              </p>
+            </div>
+            
+            <p>
+              <a href="/">Retour à l'accueil</a>
+            </p>
+          </main>
+          
+          <footer>
+            <p>Propulsé par nekoScript - Application créée le ${new Date().toLocaleDateString('fr-FR')}</p>
+          </footer>
+        </body>
+        </html>
+      `);
+    });
+    
+    // Démarrer le serveur
+    app.démarrer(PORT);
+    
+    nekAfficher("Serveur démarré sur le port " + PORT);
+    nekRetourner "Serveur web démarré avec succès";
+  }
+}
