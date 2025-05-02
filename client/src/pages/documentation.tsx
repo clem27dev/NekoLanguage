@@ -190,7 +190,7 @@ const DocumentationPage: React.FC = () => {
               <TabsContent value="cli">
                 <h2 className="font-poppins font-semibold text-2xl mb-4">Commandes CLI</h2>
                 <p className="text-gray-600 mb-6">
-                  La CLI (Command Line Interface) de nekoScript vous permet d'installer, d'exécuter, de gérer des applications persistantes et de publier des bibliothèques.
+                  La CLI (Command Line Interface) de nekoScript vous permet d'installer, d'exécuter, de gérer des applications persistantes (bots Discord, applications web, jeux) et de publier des bibliothèques.
                 </p>
                 
                 <div className="space-y-6">
@@ -210,8 +210,12 @@ const DocumentationPage: React.FC = () => {
                   
                   <div>
                     <h3 className="font-poppins font-semibold text-xl mb-2">Démarrer en mode persistant</h3>
+                    <p className="text-gray-600 mb-2">
+                      Permet de garder une application active (bot Discord, site web, jeu) même après la fin du script.
+                    </p>
                     <Terminal>
                       <TerminalLine prompt>neko-script démarrer mon-programme.neko</TerminalLine>
+                      <TerminalLine success>✓ Application démarrée et active! ID du processus: 1234</TerminalLine>
                     </Terminal>
                   </div>
                   
@@ -268,7 +272,7 @@ const DocumentationPage: React.FC = () => {
                       Discord.neko
                     </h3>
                     <p className="text-gray-600 mb-4">
-                      Bibliothèque pour créer des bots Discord facilement.
+                      Bibliothèque pour créer des bots Discord facilement. Utilise le mode persistant pour garder votre bot en ligne 24/7.
                     </p>
                     <CodeBlock>
                       <pre>
@@ -300,7 +304,7 @@ const DocumentationPage: React.FC = () => {
                       NekoJeu
                     </h3>
                     <p className="text-gray-600 mb-4">
-                      Moteur de jeu 2D simple pour créer des jeux interactifs.
+                      Moteur de jeu 2D simple pour créer des jeux interactifs. Supporte le mode persistant pour garder le jeu en exécution.
                     </p>
                     <CodeBlock>
                       <pre>
@@ -324,7 +328,7 @@ const DocumentationPage: React.FC = () => {
                       NekoWeb
                     </h3>
                     <p className="text-gray-600 mb-4">
-                      Framework web pour créer des sites dynamiques avec gestion de routes et templates.
+                      Framework web pour créer des sites dynamiques avec gestion de routes et templates. Utilisez le mode persistant pour héberger votre site web.
                     </p>
                     <CodeBlock>
                       <pre>

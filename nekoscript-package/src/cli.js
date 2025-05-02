@@ -25,7 +25,7 @@ function run() {
   // Configuration de base
   program
     .name('neko-script')
-    .description(chalk.magenta('🐱 nekoScript - Un langage de programmation français pour les développeurs'))
+    .description(chalk.magenta('🐱 nekoScript - Un langage de programmation français pour les développeurs et applications persistantes'))
     .version(packageJson.version);
 
   // Commande: télécharger
