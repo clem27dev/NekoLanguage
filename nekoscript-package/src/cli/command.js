@@ -48,9 +48,18 @@ class NekoCommand {
       case 'publish':
         return await this.handlePublish(args[1], args.slice(2).join(' '));
       case 'execute':
-        return this.handleExecute(args[1]);
+        return await this.handleExecute(args[1]);
       case 'test':
         return this.handleTest(args[1]);
+      case 'start':
+      case 'démarrer':
+        return await this.handleStartApp(args[1]);
+      case 'stop':
+      case 'arrêter':
+        return this.handleStopApp(args[1]);
+      case 'processes':
+      case 'processus':
+        return this.handleListProcesses();
       default:
         return this.handleSystemCommand(command);
     }
@@ -1237,11 +1246,37 @@ Note: Le fichier n'a pas pu être écrit sur disque.`);
   }
   
   /**
-   * Simule l'exécution du code nekoScript
+   * Exécute réellement le code nekoScript
    * @param {string} code Code à exécuter
    */
-  simulateExecution(code) {
+  async simulateExecution(code) {
     try {
+      // Utiliser notre exécuteur réel
+      const { nekoExecutor } = require('../lib/executor');
+      
+      // Déterminer le type d'application
+      const appType = nekoExecutor.detectApplicationType(code);
+      
+      // Si c'est un bot Discord, une app web ou un jeu, informer l'utilisateur
+      // qu'il peut l'exécuter en mode persistant
+      if (appType !== 'script') {
+        console.log(chalk.yellow(`⚠️ Ce code semble être une application de type: ${appType}`));
+        console.log(chalk.yellow(`Pour l'exécuter en mode persistant, utilisez: neko-script démarrer <fichier>`));
+      }
+      
+      // Exécuter le script
+      const result = await nekoExecutor.executeScript(code, {
+        verbose: true,
+        realExecution: true  // Vraie exécution, pas de simulation
+      });
+      
+      return result.output;
+    } catch (error) {
+      return chalk.red(`❌ Erreur lors de l'exécution du code: ${error.message}`);
+    }
+    
+    // L'ancien code est conservé comme commentaire pour référence
+    /*
       // Analyser le code
       const ast = this.parser.parse(code);
       
