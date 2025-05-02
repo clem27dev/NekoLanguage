@@ -104,12 +104,14 @@ ${chalk.cyan('Vous avez maintenant accès à toutes les fonctionnalités de neko
 - Développer des bots Discord
 - Construire des applications web
 - Créer des jeux simples
+- Gérer des applications persistantes
 - Et bien plus encore!
 
 ${chalk.cyan('Pour commencer, essayez:')}
 - neko-script help: voir la liste des commandes
 - neko-script init: créer un nouveau projet
 - neko-script create: créer un nouveau fichier nekoScript
+- neko-script démarrer: lancer une application persistante
 `);
   }
 
@@ -244,12 +246,13 @@ neko-script execute index.neko
       { name: 'Math.neko', desc: 'Fonctions mathématiques' },
       { name: 'Web.neko', desc: 'Création de sites web' },
       { name: 'Discord.neko', desc: 'Création de bots Discord' },
-      { name: 'Game.neko', desc: 'Création de jeux simples' },
+      { name: 'NekoJeu.neko', desc: 'Création de jeux simples' },
       { name: 'HTTP.neko', desc: 'Requêtes HTTP' },
       { name: 'File.neko', desc: 'Manipulation de fichiers' },
       { name: 'Color.neko', desc: 'Manipulation de couleurs' },
       { name: 'Time.neko', desc: 'Fonctions liées au temps' },
-      { name: 'String.neko', desc: 'Manipulation de chaînes de caractères' }
+      { name: 'String.neko', desc: 'Manipulation de chaînes de caractères' },
+      { name: 'Process.neko', desc: 'Gestion des applications persistantes' }
     ];
     
     // Ajouter les packages installés par l'utilisateur
@@ -268,6 +271,8 @@ neko-script execute index.neko
     
     output += `\n${chalk.cyan('Pour installer un package: neko-script install <nom_package>')}`;
     output += `\n${chalk.cyan('Pour créer votre propre package: neko-script publish <fichier> <nom>')}`;
+    output += `\n${chalk.cyan('Pour démarrer une application: neko-script démarrer <nom_fichier>')}`;
+    output += `\n${chalk.cyan('Pour gérer les applications: neko-script processus, neko-script arrêter <id>')}`;
     
     return output;
   }
@@ -551,6 +556,7 @@ nekModule ${moduleName} {
       if (isDiscordBot || isWebApp || isGame) {
         console.log(chalk.yellow(`⚠️ Ce code semble être une application de type: ${isDiscordBot ? 'bot Discord' : isWebApp ? 'application web' : 'jeu'}`));
         console.log(chalk.yellow(`Pour l'exécuter en mode persistant, utilisez: neko-script démarrer ${fileName}`));
+        console.log(chalk.yellow(`Cela permet de garder l'application active même après la fin du script.`));
       }
       
       // Exécuter le code réellement
@@ -637,6 +643,7 @@ nekModule ${moduleName} {
       if (appType !== 'script') {
         console.log(chalk.yellow(`⚠️ Ce code semble être une application de type: ${appType}`));
         console.log(chalk.yellow(`Pour l'exécuter en mode persistant, utilisez: neko-script démarrer <fichier>`));
+        console.log(chalk.yellow(`Cela permet de garder l'application active même après la fin du script.`));
       }
       
       // Extraction des informations

@@ -82,6 +82,33 @@ function run() {
       console.log(result);
     });
 
+  // Commande: démarrer
+  program
+    .command('démarrer <fichier>')
+    .description('Démarrer une application en mode persistant')
+    .action(async (fichier) => {
+      const result = await nekoCommand.execute(`démarrer ${fichier}`);
+      console.log(result);
+    });
+
+  // Commande: arrêter
+  program
+    .command('arrêter <id>')
+    .description('Arrêter une application en cours d\'exécution')
+    .action(async (id) => {
+      const result = await nekoCommand.execute(`arrêter ${id}`);
+      console.log(result);
+    });
+
+  // Commande: processus
+  program
+    .command('processus')
+    .description('Lister les applications en cours d\'exécution')
+    .action(async () => {
+      const result = await nekoCommand.execute('processus');
+      console.log(result);
+    });
+
   // Commande: tester
   program
     .command('tester <fichier>')
@@ -123,6 +150,13 @@ function run() {
 ║  - créer <nom.neko>   Créer un fichier         ║ 
 ║  - exécuter <fichier> Exécuter un programme    ║
 ║  - tester <fichier>   Tester un programme      ║
+║                                                ║
+║  Gestion d'applications:                       ║
+║  - démarrer <fichier> Démarrer en mode         ║
+║                       persistant               ║
+║  - arrêter <id>       Arrêter une application  ║
+║  - processus          Lister les applications  ║
+║                       actives                  ║
 ║                                                ║
 ╚════════════════════════════════════════════════╝
       `));
