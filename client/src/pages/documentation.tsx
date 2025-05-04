@@ -211,11 +211,21 @@ const DocumentationPage: React.FC = () => {
                   <div>
                     <h3 className="font-poppins font-semibold text-xl mb-2">Démarrer en mode persistant</h3>
                     <p className="text-gray-600 mb-2">
-                      Permet de garder une application active (bot Discord, site web, jeu) même après la fin du script.
+                      Permet de garder une application active (bot Discord, site web, jeu) même après la fin du script principal.
+                      Idéal pour les bots Discord qui doivent rester connectés 24/7.
                     </p>
                     <Terminal>
-                      <TerminalLine prompt>neko-script démarrer mon-programme.neko</TerminalLine>
-                      <TerminalLine success>✓ Application démarrée et active! ID du processus: 1234</TerminalLine>
+                      <TerminalLine prompt>neko-script démarrer mon-bot-discord.neko</TerminalLine>
+                      <TerminalLine success>✓ Application MonBot démarrée avec succès!</TerminalLine>
+                      <TerminalLine>📊 Informations:</TerminalLine>
+                      <TerminalLine>- ID du processus: 1234</TerminalLine>
+                      <TerminalLine>- Type d'application: bot-discord</TerminalLine>
+                      <TerminalLine>- Nom: MonBot</TerminalLine>
+                      <TerminalLine>- Bot Discord ID: bot_1683495123456</TerminalLine>
+                      <TerminalLine></TerminalLine>
+                      <TerminalLine>⚙️ Gestion:</TerminalLine>
+                      <TerminalLine>- Liste des processus: neko-script processus</TerminalLine>
+                      <TerminalLine>- Arrêter ce processus: neko-script arrêter 1234</TerminalLine>
                     </Terminal>
                   </div>
                   
@@ -229,10 +239,31 @@ const DocumentationPage: React.FC = () => {
                   
                   <div>
                     <h3 className="font-poppins font-semibold text-xl mb-2">Lister les processus actifs</h3>
+                    <p className="text-gray-600 mb-2">
+                      Affiche la liste des applications persistantes en cours d'exécution avec leurs détails.
+                    </p>
                     <Terminal>
                       <TerminalLine prompt>neko-script processus</TerminalLine>
-                      <TerminalLine>ID: 1 | Nom: mon-jeu | Type: jeu | Démarré: il y a 2 minutes</TerminalLine>
-                      <TerminalLine>ID: 2 | Nom: mon-bot | Type: bot | Démarré: il y a 5 minutes</TerminalLine>
+                      <TerminalLine>🐱 Applications nekoScript en cours d'exécution:</TerminalLine>
+                      <TerminalLine></TerminalLine>
+                      <TerminalLine>ID: 1234</TerminalLine>
+                      <TerminalLine>Type: bot-discord</TerminalLine>
+                      <TerminalLine>Nom: MonBot</TerminalLine>
+                      <TerminalLine>Fichier: /mon-bot-discord.neko</TerminalLine>
+                      <TerminalLine>Bot Discord ID: bot_1683495123456</TerminalLine>
+                      <TerminalLine>Tag Discord: MonBot#1234</TerminalLine>
+                      <TerminalLine>Statut: Connecté</TerminalLine>
+                      <TerminalLine>Temps d'exécution: 2h 15m 30s</TerminalLine>
+                      <TerminalLine>-------------------------------------</TerminalLine>
+                      <TerminalLine></TerminalLine>
+                      <TerminalLine>ID: 5678</TerminalLine>
+                      <TerminalLine>Type: web-app</TerminalLine>
+                      <TerminalLine>Nom: MonSite</TerminalLine>
+                      <TerminalLine>Fichier: /mon-site-web.neko</TerminalLine>
+                      <TerminalLine>Temps d'exécution: 45m 12s</TerminalLine>
+                      <TerminalLine>-------------------------------------</TerminalLine>
+                      <TerminalLine> </TerminalLine>
+                      <TerminalLine>Pour arrêter une application: neko-script arrêter &lt;id_processus&gt;</TerminalLine>
                     </Terminal>
                   </div>
                   
@@ -244,9 +275,13 @@ const DocumentationPage: React.FC = () => {
                   </div>
                   
                   <div>
-                    <h3 className="font-poppins font-semibold text-xl mb-2">Publier une bibliothèque</h3>
+                    <h3 className="font-poppins font-semibold text-xl mb-2">Publier un package</h3>
+                    <p className="text-gray-600 mb-2">
+                      Publie un fichier .neko ou .js comme un package réutilisable dans le registre nekoScript.
+                    </p>
                     <Terminal>
-                      <TerminalLine prompt>neko-script publish MaBibliotheque.neko</TerminalLine>
+                      <TerminalLine prompt>neko-script publish package mon-package.neko MonPackage</TerminalLine>
+                      <TerminalLine success>✓ Package MonPackage publié avec succès (version 1.0.0)</TerminalLine>
                     </Terminal>
                   </div>
                   
@@ -346,6 +381,105 @@ const DocumentationPage: React.FC = () => {
                         <br />
                         <br />
                         app.<CodeFunction>démarrer</CodeFunction>(<CodeNumber>3000</CodeNumber>);
+                      </pre>
+                    </CodeBlock>
+                  </div>
+
+                  <div>
+                    <h3 className="font-poppins font-semibold text-xl mb-4 flex items-center gap-2">
+                      <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Avancé</span>
+                      Créer vos propres packages
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Vous pouvez créer vos propres packages pour étendre nekoScript avec vos fonctionnalités personnalisées.
+                      Les packages peuvent être écrits en nekoScript (.neko) ou en JavaScript (.js) pour encore plus de flexibilité.
+                    </p>
+
+                    <h4 className="font-poppins font-medium text-lg mt-5 mb-2">Structure d'un package</h4>
+                    <CodeBlock className="mb-4">
+                      <pre>
+                        <CodeComment>// MonPackage.neko - Un package utilisateur simple</CodeComment>
+                        <br />
+                        <br />
+                        <CodeComment>// Définir un module avec nekModule</CodeComment>
+                        <br />
+                        <CodeKeyword>nekModule</CodeKeyword> MonPackage
+                        <br />
+                        <br />
+                        <CodeComment>// Importer d'autres modules si nécessaire</CodeComment>
+                        <br />
+                        <CodeKeyword>nekImporter</CodeKeyword> AutreModule <CodeKeyword>depuis</CodeKeyword> <CodeString>"AutreModule.neko"</CodeString>
+                        <br />
+                        <br />
+                        <CodeComment>// Définir des fonctions et des variables</CodeComment>
+                        <br />
+                        <CodeKeyword>nekFonction</CodeKeyword> maFonction(param1, param2) {"{"}
+                        <br />
+                        {"  "}<CodeKeyword>nekVariable</CodeKeyword> resultat = param1 + param2;
+                        <br />
+                        {"  "}<CodeKeyword>nekRetourner</CodeKeyword> resultat;
+                        <br />
+                        {"}"}
+                        <br />
+                        <br />
+                        <CodeComment>// Exporter les fonctions pour qu'elles soient accessibles</CodeComment>
+                        <br />
+                        <CodeKeyword>exporter</CodeKeyword> maFonction
+                      </pre>
+                    </CodeBlock>
+
+                    <h4 className="font-poppins font-medium text-lg mt-5 mb-2">Publication et utilisation</h4>
+                    <ol className="list-decimal list-inside space-y-2 mb-4 text-gray-700">
+                      <li>Créez votre package dans un fichier .neko ou .js</li>
+                      <li>Publiez-le avec <code className="bg-gray-100 px-1 py-0.5 rounded">neko-script publish package mon-package.neko NomPackage</code></li>
+                      <li>Utilisez-le dans d'autres scripts avec <code className="bg-gray-100 px-1 py-0.5 rounded">nekImporter NomPackage</code></li>
+                    </ol>
+
+                    <h4 className="font-poppins font-medium text-lg mt-5 mb-2">Exemple de package pour Discord</h4>
+                    <p className="text-gray-600 mb-2">
+                      Voici un exemple de package qui facilite la création de bots Discord :
+                    </p>
+                    <CodeBlock className="mb-4">
+                      <pre>
+                        <CodeComment>// DiscordUtils.neko - Utilitaires pour bots Discord</CodeComment>
+                        <br />
+                        <CodeKeyword>nekModule</CodeKeyword> DiscordUtils
+                        <br />
+                        <br />
+                        <CodeKeyword>nekImporter</CodeKeyword> Discord
+                        <br />
+                        <br />
+                        <CodeKeyword>nekFonction</CodeKeyword> créerBotSimple(token, préfixe) {"{"}
+                        <br />
+                        {"  "}<CodeKeyword>nekVariable</CodeKeyword> bot = Discord.Bot(token);
+                        <br />
+                        <br />
+                        {"  "}bot.<CodeFunction>surCommande</CodeFunction>(préfixe, <CodeKeyword>nekFonction</CodeKeyword>(commande) {"{"}
+                        <br />
+                        {"    "}<CodeComment>// Code pour gérer les commandes</CodeComment>
+                        <br />
+                        {"  "}{"}"}); 
+                        <br />
+                        <br />
+                        {"  "}<CodeKeyword>nekRetourner</CodeKeyword> bot;
+                        <br />
+                        {"}"}
+                        <br />
+                        <br />
+                        <CodeKeyword>exporter</CodeKeyword> créerBotSimple
+                      </pre>
+                    </CodeBlock>
+
+                    <h4 className="font-poppins font-medium text-lg mt-5 mb-2">Utilisation du package personnalisé</h4>
+                    <CodeBlock>
+                      <pre>
+                        <CodeKeyword>nekImporter</CodeKeyword> DiscordUtils
+                        <br />
+                        <br />
+                        <CodeKeyword>nekVariable</CodeKeyword> monBot = DiscordUtils.<CodeFunction>créerBotSimple</CodeFunction>(<CodeString>"MON_TOKEN"</CodeString>, <CodeString>"!"</CodeString>);
+                        <br />
+                        <br />
+                        monBot.<CodeFunction>démarrer</CodeFunction>();
                       </pre>
                     </CodeBlock>
                   </div>
