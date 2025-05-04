@@ -6,6 +6,11 @@
 "use strict";
 
 const { nekoParser } = require('./parser');
+const Discord = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, ActivityType } = Discord;
+
+// Map pour suivre les instances de bots Discord actives
+const activeDiscordBots = new Map();
 
 /**
  * Interface for package data
@@ -332,27 +337,40 @@ class NekoInterpreter {
       if (node.source === 'Discord.neko') {
         try {
           // Utiliser Discord.js réel pour les bots Discord
-          const Discord = require('discord.js');
-          
           this.environment.set(node.name, {
             Bot: (token) => {
               try {
+                // Générer un ID unique pour ce bot
+                const botId = `bot_${Date.now()}`;
+                
                 // Créer un client Discord.js réel avec les intents nécessaires
-                const client = new Discord.Client({ 
+                const client = new Client({ 
                   intents: [
-                    Discord.GatewayIntentBits.Guilds,
-                    Discord.GatewayIntentBits.GuildMessages, 
-                    Discord.GatewayIntentBits.MessageContent,
-                    Discord.GatewayIntentBits.GuildMessageReactions
+                    GatewayIntentBits.Guilds,
+                    GatewayIntentBits.GuildMessages, 
+                    GatewayIntentBits.GuildMembers,
+                    GatewayIntentBits.MessageContent,
+                    GatewayIntentBits.GuildMessageReactions,
+                    GatewayIntentBits.GuildVoiceStates
                   ] 
                 });
 
                 // Indiquer lorsque le bot est prêt
                 client.once('ready', () => {
-                  console.log(`Bot Discord connecté en tant que ${client.user.tag}`);
+                  console.log(`Bot Discord connecté en tant que ${client.user.tag} (ID: ${botId})`);
+                });
+
+                // Enregistrer cette instance de bot dans notre Map des bots actifs
+                activeDiscordBots.set(botId, {
+                  client: client,
+                  token: token,
+                  createdAt: new Date(),
+                  id: botId
                 });
 
                 const bot = {
+                  _id: botId,
+                  _client: client,
                   surMessage: (fn) => {
                     // Gestionnaire réel de messages
                     client.on('messageCreate', (message) => {
@@ -448,22 +466,32 @@ class NekoInterpreter {
                   changerStatut: (message, type = "PLAYING") => {
                     // Changer réellement le statut du bot
                     const types = {
-                      "JOUE": "PLAYING",
-                      "REGARDE": "WATCHING",
-                      "ÉCOUTE": "LISTENING",
-                      "EN_STREAM": "STREAMING"
+                      "JOUE": "Playing",
+                      "REGARDE": "Watching",
+                      "ÉCOUTE": "Listening",
+                      "EN_STREAM": "Streaming",
+                      "COMPETING": "Competing"
                     };
                     
-                    const activityType = types[type] || type;
+                    // Convertir le type au format approprié
+                    let activityType;
+                    if (types[type]) {
+                      activityType = ActivityType[types[type]];
+                    } else if (ActivityType[type]) {
+                      activityType = ActivityType[type];
+                    } else {
+                      activityType = ActivityType.Playing;
+                    }
                     
-                    client.user?.setActivity(message, { type: Discord.ActivityType[activityType] });
-                    console.log(`Statut Discord changé: ${type} ${message} (RÉEL)`);
+                    // Définir l'activité
+                    client.user?.setActivity(message, { type: activityType });
+                    console.log(`Statut Discord changé: ${type} ${message} (ID: ${botId})`);
                     return `Statut Discord du bot changé: ${type} ${message}`;
                   },
                   
                   créerEmbed: (titre, description, couleur = "#5865F2") => {
                     // Créer un embed Discord réel
-                    const embed = new Discord.EmbedBuilder()
+                    const embed = new EmbedBuilder()
                       .setTitle(titre)
                       .setDescription(description)
                       .setColor(couleur);
@@ -492,20 +520,70 @@ class NekoInterpreter {
                       définirTimestamp: () => {
                         embed.setTimestamp();
                         return embed;
+                      },
+                      // Aide pour envoyer l'embed
+                      envoyer: (canal) => {
+                        if (canal && canal.envoyer) {
+                          return canal.envoyer({ embeds: [embed] });
+                        } else {
+                          console.warn("Canal invalide pour envoi d'embed");
+                          return null;
+                        }
                       }
                     };
                   },
                   
-                  démarrer: () => {
-                    // Connexion réelle à Discord
-                    client.login(token).catch(err => {
+                  démarrer: async () => {
+                    try {
+                      // Connexion réelle à Discord
+                      await client.login(token);
+                      
+                      // Mettre à jour le statut dans notre registre
+                      const botInfo = activeDiscordBots.get(botId);
+                      if (botInfo) {
+                        botInfo.isConnected = true;
+                        botInfo.startedAt = new Date();
+                        activeDiscordBots.set(botId, botInfo);
+                      }
+                      
+                      console.log(`Bot Discord démarré (ID: ${botId}, Tag: ${client.user.tag})`);
+                      return {
+                        success: true,
+                        id: botId,
+                        message: `Bot Discord démarré avec succès! (${client.user.tag})`,
+                        tag: client.user.tag
+                      };
+                    } catch (err) {
                       console.error("Erreur de connexion Discord:", err);
+                      
+                      // Nettoyer le bot échoué de notre registre
+                      activeDiscordBots.delete(botId);
+                      
                       throw new Error(`Erreur de connexion Discord: ${err.message}`);
-                    });
-                    
-                    console.log("Bot Discord démarré (RÉEL)");
-                    return "Bot Discord démarré avec une connexion réelle à l'API Discord";
-                  }
+                    }
+                  },
+                  
+                  arrêter: () => {
+                    // Déconnecter le bot proprement
+                    try {
+                      client.destroy();
+                      
+                      // Mettre à jour notre registre
+                      activeDiscordBots.delete(botId);
+                      
+                      console.log(`Bot Discord arrêté (ID: ${botId})`);
+                      return {
+                        success: true,
+                        message: `Bot Discord arrêté avec succès! (ID: ${botId})`
+                      };
+                    } catch (err) {
+                      console.error(`Erreur lors de l'arrêt du bot Discord:`, err);
+                      throw new Error(`Erreur lors de l'arrêt du bot: ${err.message}`);
+                    }
+                  },
+                  
+                  // Obtenir l'ID pour référence externe
+                  obtenirId: () => botId
                 };
                 
                 return bot;
