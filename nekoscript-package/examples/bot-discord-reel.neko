@@ -1,79 +1,76 @@
-// bot-discord-reel.neko - Un bot Discord créé avec nekoScript
-nekModule BotDiscord {
-  // Importer les packages nécessaires
-  nekImporter Base;
-  nekImporter Discord;
+// Bot Discord Réel en nekoScript
+// Ce bot reste connecté et répond aux commandes même après l'exécution du script
+
+// Importer le module Discord
+nekImporter Discord
+
+// Créer une instance de bot Discord avec un token
+// Remplacer ce token par un vrai token Discord pour que ça fonctionne
+// IMPORTANT: Dans un projet réel, utilisez les variables d'environnement!
+constante BOT_TOKEN = "VOTRE_TOKEN_DISCORD_ICI"
+
+// Création du bot avec token
+constante bot = Discord.Bot(BOT_TOKEN)
+
+// Configuration des événements du bot
+bot.surMessage(fonction(message) {
+  // Afficher les messages reçus dans la console
+  nekAfficher("Message reçu: " + message.contenu)
   
-  // Configuration du bot
-  nekVariable TOKEN = "VOTRE_TOKEN_DISCORD"; // Remplacer par votre token Discord
-  nekVariable PREFIX = "!";
-  
-  // Fonction principale pour le démarrage du bot
-  nekFonction nekPrincipal() {
-    nekAfficher("Démarrage du bot Discord...");
-    
-    // Création d'un nouveau client Discord
-    nekVariable bot = Discord.créerBot(TOKEN);
-    
-    // Configuration des événements
-    bot.surConnexion(() => {
-      nekAfficher("Bot connecté avec succès!");
-      nekAfficher("Nom du bot: " + bot.nom);
-      nekAfficher("ID du bot: " + bot.id);
-    });
-    
-    // Gestion des messages reçus
-    bot.surMessage(message => {
-      // Ignorer les messages du bot lui-même
-      si (message.auteur.estBot) {
-        nekRetourner;
-      }
-      
-      // Vérifier si le message commence par le préfixe
-      si (message.contenu.commenceAvec(PREFIX)) {
-        // Extraire la commande et les arguments
-        nekVariable args = message.contenu.substring(PREFIX.longueur).split(" ");
-        nekVariable commande = args[0].toLowerCase();
-        args.shift(); // Retirer la commande des arguments
-        
-        // Commandes disponibles
-        si (commande === "ping") {
-          message.répondre("Pong! 🏓 Latence: " + bot.latence + "ms");
-        }
-        sinonSi (commande === "info") {
-          message.répondre("Je suis un vrai bot Discord créé avec nekoScript! 🐱");
-        }
-        sinonSi (commande === "aide") {
-          message.répondre(`
-**Commandes disponibles:**
-- ${PREFIX}ping - Vérifier la latence du bot
-- ${PREFIX}info - Informations sur le bot
-- ${PREFIX}aide - Afficher cette aide
-- ${PREFIX}salut - Dire bonjour
-- ${PREFIX}météo [ville] - Afficher la météo (simulation)
-          `);
-        }
-        sinonSi (commande === "salut") {
-          message.répondre("Bonjour " + message.auteur.nom + "! 👋");
-        }
-        sinonSi (commande === "météo") {
-          nekVariable ville = args.join(" ") || "Paris";
-          nekVariable météos = ["☀️ Ensoleillé", "🌧️ Pluvieux", "⛅ Nuageux", "❄️ Neigeux", "🌪️ Orageux"];
-          nekVariable températures = Math.floor(Math.random() * 30) + 5; // Entre 5°C et 35°C
-          nekVariable météoIndex = Math.floor(Math.random() * météos.length);
-          
-          message.répondre(`
-**Météo pour ${ville}:**
-Temps: ${météos[météoIndex]}
-Température: ${températures}°C
-          `);
-        }
-      }
-    });
-    
-    // Démarrer le bot
-    bot.démarrer();
-    
-    nekRetourner "Bot démarré avec succès";
+  // Répondre au message "bonjour"
+  si (message.contenu === "bonjour") {
+    message.repondre("Bonjour ! Je suis un bot nekoScript réel !")
   }
-}
+})
+
+// Configuration du gestionnaire de commandes avec le préfixe "!"
+bot.surCommande("!", fonction(commande) {
+  // Commande !aide
+  si (commande.nom === "aide") {
+    commande.repondre("Commandes disponibles: !aide, !ping, !statut, !info")
+  }
+  
+  // Commande !ping
+  si (commande.nom === "ping") {
+    commande.repondre("Pong! 🏓")
+  }
+  
+  // Commande !statut
+  si (commande.nom === "statut") {
+    commande.repondre("Je suis un bot nekoScript, et je suis en ligne! 🐱")
+    bot.changerStatut("nekoScript", "JOUE")
+  }
+  
+  // Commande !info
+  si (commande.nom === "info") {
+    // Créer un embed
+    constante embed = bot.créerEmbed(
+      "nekoScript Bot",
+      "Un bot créé avec le langage de programmation nekoScript",
+      "#FF00FF"
+    )
+    
+    // Ajouter des informations à l'embed
+    embed.ajouterChamp("Qu'est-ce que nekoScript?", "Un langage de programmation en français basé sur JavaScript", faux)
+    embed.ajouterChamp("Préfixe", "!", vrai)
+    embed.ajouterChamp("Version", "1.0.0", vrai)
+    embed.définirTimestamp()
+    
+    // Envoyer l'embed
+    commande.canal.envoyer({ embeds: [embed.embed] })
+  }
+})
+
+// Définir un statut pour le bot
+bot.changerStatut("nekoScript est génial !", "JOUE")
+
+// Connecter le bot à Discord
+bot.démarrer()
+
+// Informations sur comment arrêter le bot
+nekAfficher("Bot démarré et connecté à Discord.")
+nekAfficher("Pour le voir dans la liste des processus: neko-script processus")
+nekAfficher("Pour l'arrêter: neko-script arrêter <id_processus>")
+
+// Cette ligne sera exécutée, mais le bot continuera à fonctionner après
+nekAfficher("Fin du script principal, mais le bot reste actif!")

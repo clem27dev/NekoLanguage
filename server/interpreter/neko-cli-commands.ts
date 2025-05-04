@@ -2,6 +2,18 @@ import { readFileSync, existsSync, writeFileSync } from 'fs';
 import path from 'path';
 import { nekoInterpreterFixed } from './neko-interpreter-fixed';
 
+// Pour accéder aux bots Discord actifs
+let activeDiscordBots: Map<string, any>;
+try {
+  // Tenter d'importer depuis le module interpreter.js
+  const interpreterModule = require('../../nekoscript-package/src/interpreter');
+  activeDiscordBots = interpreterModule.activeDiscordBots;
+} catch (e) {
+  // Si l'import échoue, créer une map vide
+  activeDiscordBots = new Map();
+  console.warn('Impossible de charger les bots Discord actifs depuis interpreter.js');
+}
+
 // Gestion des processus persistants
 interface NekoProcess {
   id: number;
@@ -9,6 +21,7 @@ interface NekoProcess {
   type: string;
   startTime: number;
   fileName: string;
+  botId?: string | null;
 }
 
 // Liste des processus actifs
@@ -203,38 +216,68 @@ Commandes disponibles:
       
       // Générer un ID unique
       const processId = Date.now() % 10000;
+      let botId: string | null = null;
       
       // Exécuter l'application en arrière-plan
-      // Dans une vraie implémentation, on devrait créer un processus enfant
-      // Ici, on va juste simuler l'exécution
-      setTimeout(async () => {
-        try {
-          await nekoInterpreterFixed.execute(code);
-        } catch (err) {
-          console.error(`Erreur lors de l'exécution de ${moduleName}:`, err);
+      let result;
+      try {
+        console.log(`Démarrage de l'application ${moduleName} (${appType})...`);
+        
+        // Exécution du code nekoScript
+        result = await nekoInterpreterFixed.execute(code);
+        
+        // Pour les bots Discord, vérifier s'ils ont été ajoutés au registre
+        if (appType === 'bot-discord' && activeDiscordBots) {
+          // Rechercher le bot le plus récemment créé
+          let newestBot = null;
+          let newestTime = 0;
+          
+          activeDiscordBots.forEach((bot: any, id: string) => {
+            if (bot.createdAt && bot.createdAt.getTime() > newestTime) {
+              newestBot = bot;
+              newestTime = bot.createdAt.getTime();
+              botId = id;
+            }
+          });
+          
+          if (newestBot) {
+            console.log(`Bot Discord détecté: ${botId}`);
+          }
         }
-      }, 0);
+      } catch (err) {
+        console.error(`Erreur lors de l'exécution de ${moduleName}:`, err);
+      }
       
       // Enregistrer l'application dans la liste des processus actifs
-      activeProcesses.set(processId, {
+      const processInfo = {
         id: processId,
         name: moduleName,
         type: appType,
         startTime: Date.now(),
-        fileName: filePath
-      });
+        fileName: filePath,
+        botId: botId
+      };
+      
+      activeProcesses.set(processId, processInfo);
+      
+      let additionalInfo = '';
+      if (botId) {
+        additionalInfo = `\nBot Discord ID: ${botId}`;
+      }
       
       return `✅ Application ${moduleName} démarrée avec succès!
 
 📊 Informations:
 - ID du processus: ${processId}
 - Type d'application: ${appType}
-- Nom: ${moduleName}
+- Nom: ${moduleName}${additionalInfo}
 
 ⚙️ Gestion:
 - Liste des processus: neko-script processus
 - Arrêter ce processus: neko-script arrêter ${processId}
-      `;
+
+✨ Statut: L'application est en cours d'exécution et restera active même après la fin de cette commande.
+`;
     } catch (error: any) {
       return `Erreur lors du démarrage de l'application: ${error.message}`;
     }
@@ -259,6 +302,29 @@ Commandes disponibles:
       
       // Récupérer les informations du processus
       const process = activeProcesses.get(pid)!;
+      
+      // Si c'est un bot Discord, tenter de le déconnecter proprement
+      if (process.type === 'bot-discord' && process.botId && activeDiscordBots) {
+        try {
+          const botInfo = activeDiscordBots.get(process.botId);
+          
+          if (botInfo && botInfo.client) {
+            // Déconnecter le bot Discord proprement
+            console.log(`Arrêt du bot Discord (ID: ${process.botId})...`);
+            botInfo.client.destroy();
+            activeDiscordBots.delete(process.botId);
+            console.log(`Bot Discord arrêté avec succès!`);
+          }
+        } catch (botError) {
+          console.error(`Erreur lors de l'arrêt du bot Discord: ${botError}`);
+        }
+      }
+      
+      // Si c'est une application web, tenter de fermer le serveur
+      else if (process.type === 'web-app') {
+        console.log(`Arrêt de l'application web (ID: ${pid})...`);
+        // Logique pour arrêter les serveurs web pourrait être ajoutée ici
+      }
       
       // Supprimer le processus de la liste
       activeProcesses.delete(pid);
@@ -298,6 +364,25 @@ Commandes disponibles:
         output += `\nNom: ${process.name}`;
         output += `\nFichier: ${process.fileName}`;
         output += `\nTemps d'exécution: ${uptime}`;
+        
+        // Informations spécifiques au type d'application
+        if (process.type === 'bot-discord' && process.botId) {
+          output += `\nBot Discord ID: ${process.botId}`;
+          
+          // Tenter d'obtenir des informations plus détaillées sur le bot
+          try {
+            if (activeDiscordBots && activeDiscordBots.has(process.botId)) {
+              const botInfo = activeDiscordBots.get(process.botId);
+              if (botInfo && botInfo.client && botInfo.client.user) {
+                output += `\nTag Discord: ${botInfo.client.user.tag}`;
+                output += `\nStatut: ${botInfo.isConnected ? 'Connecté' : 'Déconnecté'}`;
+              }
+            }
+          } catch (e) {
+            // En cas d'erreur, ne pas afficher les informations supplémentaires
+          }
+        }
+        
         output += `\n-------------------------------------`;
       });
       

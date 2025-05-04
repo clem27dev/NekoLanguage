@@ -1,0 +1,90 @@
+// MonDiscordUtils.neko
+// Un package utilisateur pour simplifier la création de bots Discord avec nekoScript
+
+// Définir un module
+nekModule DiscordUtils
+
+// Importer le module Discord de base
+nekImporter Discord
+
+// Fonction pour créer un bot avec des fonctionnalités courantes pré-configurées
+fonction créerBotSimple(token, préfixe, nomBot) {
+  // Créer le bot
+  constante bot = Discord.Bot(token)
+  
+  // Configuration par défaut
+  constante commandes = {}
+  
+  // Configurer le gestionnaire de commandes standard
+  bot.surCommande(préfixe, fonction(commande) {
+    // Vérifier si la commande existe dans notre registre
+    si (commandes[commande.nom]) {
+      // Exécuter la fonction associée à cette commande
+      commandes[commande.nom](commande)
+    } sinon {
+      // Commande inconnue
+      commande.repondre(`Commande \`${préfixe}${commande.nom}\` inconnue. Utilisez \`${préfixe}aide\` pour voir les commandes disponibles.`)
+    }
+  })
+  
+  // Ajouter la commande d'aide par défaut
+  commandes["aide"] = fonction(commande) {
+    constante listeCommandes = Object.keys(commandes).join(", ")
+    constante embed = bot.créerEmbed(
+      `Aide - ${nomBot}`,
+      `Voici les commandes disponibles avec le préfixe \`${préfixe}\``,
+      "#00AAFF"
+    )
+    embed.ajouterChamp("Commandes", listeCommandes)
+    embed.ajouterChamp("Exemple", `${préfixe}aide`, vrai)
+    embed.définirTimestamp()
+    
+    commande.canal.envoyer({ embeds: [embed.embed] })
+  }
+  
+  // Fonctions utilitaires pour le bot
+  retourner {
+    // Le bot Discord.js original
+    bot: bot,
+    
+    // Démarrer le bot
+    démarrer: fonction() {
+      bot.changerStatut(nomBot, "JOUE")
+      bot.démarrer()
+      nekAfficher(`Bot ${nomBot} démarré!`)
+      retourner bot.obtenirId() // Retourner l'ID pour référence
+    },
+    
+    // Ajouter une commande
+    ajouterCommande: fonction(nom, fn, description = "") {
+      commandes[nom] = fn
+      nekAfficher(`Commande ${préfixe}${nom} ajoutée.`)
+    },
+    
+    // Créer une réponse embed standard
+    répondreAvecEmbed: fonction(commande, titre, description, couleur = "#00AAFF") {
+      constante embed = bot.créerEmbed(titre, description, couleur)
+      embed.définirTimestamp()
+      commande.canal.envoyer({ embeds: [embed.embed] })
+    }
+  }
+}
+
+// Fonction pour créer un embed d'erreur
+fonction créerEmbedErreur(bot, titre, message) {
+  constante embed = bot.créerEmbed(titre, message, "#FF0000")
+  embed.définirTimestamp()
+  retourner embed
+}
+
+// Fonction pour créer un embed de succès
+fonction créerEmbedSuccès(bot, titre, message) {
+  constante embed = bot.créerEmbed(titre, message, "#00FF00")
+  embed.définirTimestamp()
+  retourner embed
+}
+
+// Exporter les fonctions du module
+exporter créerBotSimple
+exporter créerEmbedErreur
+exporter créerEmbedSuccès

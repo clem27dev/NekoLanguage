@@ -1,0 +1,40 @@
+// Exemple d'utilisation d'un package utilisateur pour créer un bot Discord
+// Ce code suppose que vous avez déjà publié le package MonDiscordUtils avec:
+// neko-script publish package MonDiscordUtils.neko MonDiscordUtils
+
+// Importer le package utilisateur
+nekImporter MonDiscordUtils
+
+// Configuration du bot
+constante TOKEN = "VOTRE_TOKEN_DISCORD_ICI"
+constante PREFIX = "!"
+constante NOM_BOT = "MonBot"
+
+// Créer un bot avec le package utilisateur
+constante monBot = MonDiscordUtils.créerBotSimple(TOKEN, PREFIX, NOM_BOT)
+
+// Ajouter des commandes personnalisées
+monBot.ajouterCommande("ping", fonction(commande) {
+  commande.repondre("Pong! 🏓")
+})
+
+monBot.ajouterCommande("salut", fonction(commande) {
+  MonDiscordUtils.créerEmbedSuccès(monBot.bot, "Bonjour!", 
+    `Salut ${commande.auteur.nom}! Comment ça va?`
+  ).envoyer(commande.canal)
+})
+
+monBot.ajouterCommande("erreur", fonction(commande) {
+  MonDiscordUtils.créerEmbedErreur(monBot.bot, "Erreur simulée",
+    "Ceci est un exemple d'erreur pour démonstration."
+  ).envoyer(commande.canal)
+})
+
+// Démarrer le bot
+constante botId = monBot.démarrer()
+
+// Informations finales
+nekAfficher("Bot créé avec le package MonDiscordUtils!")
+nekAfficher(`ID du bot: ${botId}`)
+nekAfficher(`Pour interagir avec le bot, utilisez les commandes avec le préfixe '${PREFIX}'`)
+nekAfficher("Pour arrêter le bot: neko-script arrêter <id_processus>")
