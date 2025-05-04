@@ -245,7 +245,7 @@ const DocumentationPage: React.FC = () => {
                     <Terminal>
                       <TerminalLine prompt>neko-script processus</TerminalLine>
                       <TerminalLine>🐱 Applications nekoScript en cours d'exécution:</TerminalLine>
-                      <TerminalLine></TerminalLine>
+                      <TerminalLine> </TerminalLine>
                       <TerminalLine>ID: 1234</TerminalLine>
                       <TerminalLine>Type: bot-discord</TerminalLine>
                       <TerminalLine>Nom: MonBot</TerminalLine>
@@ -255,7 +255,7 @@ const DocumentationPage: React.FC = () => {
                       <TerminalLine>Statut: Connecté</TerminalLine>
                       <TerminalLine>Temps d'exécution: 2h 15m 30s</TerminalLine>
                       <TerminalLine>-------------------------------------</TerminalLine>
-                      <TerminalLine></TerminalLine>
+                      <TerminalLine> </TerminalLine>
                       <TerminalLine>ID: 5678</TerminalLine>
                       <TerminalLine>Type: web-app</TerminalLine>
                       <TerminalLine>Nom: MonSite</TerminalLine>
@@ -263,7 +263,7 @@ const DocumentationPage: React.FC = () => {
                       <TerminalLine>Temps d'exécution: 45m 12s</TerminalLine>
                       <TerminalLine>-------------------------------------</TerminalLine>
                       <TerminalLine> </TerminalLine>
-                      <TerminalLine>Pour arrêter une application: neko-script arrêter &lt;id_processus&gt;</TerminalLine>
+                      <TerminalLine>Pour arrêter une application: neko-script arrêter ID_PROCESSUS</TerminalLine>
                     </Terminal>
                   </div>
                   
